@@ -29,8 +29,11 @@ async def get_all_exisiting_workflows(n8n_api_key,uri="localhost:5678"):
         return workflow_name_w_id_list
     else: 
         return "Error in retrieving existing workflows"
-        
-        
-        
     
+@tool 
+async def modify_workflow(workflow_json):
+    pass
 
+@tool
+async def merge_workflow(workflow_json):
+    pass
