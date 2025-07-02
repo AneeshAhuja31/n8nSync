@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>n8n Agent Chat</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body data-sidebar-open="true"> <div class="container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1 class="logo">n8n Agent</h1>
+        <button class="sidebar-toggle-btn" aria-label="Close Sidebar">
+          <i class="fas fa-times"></i> </button>
+      </div>
+      <nav class="nav-links">
+        <a href="#">New Chat</a>
+        <a href="#">History</a>
+        <a href="#">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="chat-container">
+      <button class="sidebar-open-btn" aria-label="Open Sidebar">
+        <i class="fas fa-bars"></i> </button>
+
+      <div class="chat-messages">
+        <div class="message agent">
+          Hello! How can I help you automate your workflow today?
+        </div>
+
+        <div class="message user">
+          How do I set up a webhook in n8n?
+        </div>
+
+        <div class="message agent">
+          Sure! To set up a webhook:
+          1. Create a new workflow
+          2. Add a Webhook node
+          3. Configure the method and path
+          4. Save and activate the workflow
+          Let me know if you want to test it!
+        </div>
+      </div>
+
+      <form class="chat-input">
+        <input type="text" placeholder="Type your message..." />
+        <button type="submit">Send</button>
+      </form>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const body = document.body;
+      const closeSidebarBtn = document.querySelector('.sidebar-toggle-btn'); // Button inside sidebar
+      const openSidebarBtn = document.querySelector('.sidebar-open-btn');   // Button outside sidebar
+
+      function toggleSidebar() {
+        const isSidebarOpen = body.getAttribute('data-sidebar-open') === 'true';
+        body.setAttribute('data-sidebar-open', !isSidebarOpen);
+
+        // Manage button visibility (CSS will handle the actual display)
+        if (isSidebarOpen) {
+          // Sidebar is closing
+          closeSidebarBtn.setAttribute('aria-label', 'Open Sidebar');
+          openSidebarBtn.setAttribute('aria-label', 'Close Sidebar'); // No, this isn't right, the button is for opening
+        } else {
+          // Sidebar is opening
+          closeSidebarBtn.setAttribute('aria-label', 'Close Sidebar');
+          openSidebarBtn.setAttribute('aria-label', 'Open Sidebar'); // No
+        }
+      }
+
+      closeSidebarBtn.addEventListener('click', toggleSidebar);
+      openSidebarBtn.addEventListener('click', toggleSidebar);
+    });
+  </script>
+</body>
+</html>
