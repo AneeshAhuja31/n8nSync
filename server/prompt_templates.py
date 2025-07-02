@@ -2,6 +2,7 @@ from langchain_core.prompts import SystemMessagePromptTemplate
 from string import Template
 system_prompt_template = SystemMessagePromptTemplate.from_template("""
 
+
 """)
 
 creation_prompt_template = Template("""
@@ -48,5 +49,43 @@ creation_prompt_template = Template("""
 
     Now, generate an n8n workflow JSON based on the following user prompt:
     ${prompt}
-    """
-    )
+""")
+
+explaination_prompt_template = SystemMessagePromptTemplate.from_template("""
+    You are an expert n8n workflow analyzer. Analyze the provided workflow JSON and explain in clear, human-readable terms:
+
+    1. What this workflow does (main purpose)
+    2. How it's triggered 
+    3. The step-by-step process
+    4. What outputs/actions it produces
+    5. Any potential issues or improvements
+
+    Be concise but comprehensive. Use simple language that non-technical users can understand.
+            
+        
+    Here is the n8n workflow:
+    {workflow_json}
+
+    Provide a clear explanation of what this workflow does.
+""")
+
+modification_prompt_template = SystemMessagePromptTemplate.from_template("""
+    You are an expert in n8n workflow modification. Given the existing workflow JSON and requested changes, modify the workflow accordingly.
+    
+    **Original Workflow:**
+    ```json
+    {existing_workflow_json}
+    ```
+    
+    **Requested Changes:**
+    {custom_changes}
+    
+    **Instructions:**
+    - Modify the workflow JSON to incorporate the requested changes
+    - Maintain the existing workflow structure and format
+    - Ensure all node connections remain valid
+    - Generate ONLY the modified JSON workflow - no explanatory text
+    - The output should be a complete, valid n8n workflow JSON
+    
+    Return the modified workflow JSON:
+""")
