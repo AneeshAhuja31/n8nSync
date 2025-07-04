@@ -1,6 +1,7 @@
 from langchain.tools import tool
 import requests
 from typing import Dict,Any,List
+from tool_descriptions import fetch_exisiting_workflow_description,get_all_exisiting_workflows_description,create_workflow_from_prompt_description,explain_workflow_description,modify_workflow_description
 from prompt_templates import creation_prompt_template,explaination_prompt_template,modification_prompt_template
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
@@ -9,9 +10,10 @@ import json
 load_dotenv()
 
 gemini_api_key_workflow_generation = os.getenv("GEMINI_API_KEY_WORKFLOW_GENERATION")
+n8n_api_key = os.getenv("N8N_API_KEY")
 
-@tool
-async def fetch_exisiting_workflow(n8n_api_key:str,workflow_id:str,uri:str="localhost:5678") -> Dict[str,Any]:
+@tool(description=fetch_exisiting_workflow_description)
+async def fetch_exisiting_workflow(workflow_id:str,uri:str="localhost:5678") -> Dict[str,Any]:
     response = requests.get(f"http://{uri}/api/v1/workflows/{workflow_id}",headers={
         "accept":"application/json",
         "X-N8N-API-KEY":f"{n8n_api_key}"
@@ -20,8 +22,8 @@ async def fetch_exisiting_workflow(n8n_api_key:str,workflow_id:str,uri:str="loca
         return {"success":True,"workflow":response.json()}
     return {"success":False,"error":f"Error in retrieving workflow with id: {workflow_id}"}
 
-@tool
-async def get_all_exisiting_workflows(n8n_api_key:str,uri:str="localhost:5678") -> Dict[str,Any]:
+@tool(description=get_all_exisiting_workflows_description)
+async def get_all_exisiting_workflows(uri:str="localhost:5678") -> Dict[str,Any]:
     response = requests.get(f"http://{uri}/api/v1/workflows",headers={
         "accept":"application/json",
         "X-N8N-API-KEY":f"{n8n_api_key}"
@@ -43,16 +45,14 @@ async def get_all_exisiting_workflows(n8n_api_key:str,uri:str="localhost:5678") 
         return {"success":False,"error":"Error in retrieving existing workflows","status_code":response.status_code}
 
 
-@tool
+@tool(description=create_workflow_from_prompt_description)
 async def create_workflow_from_prompt(prompt:str) -> Dict[str,Any]:
-    
     full_prompt = creation_prompt_template.substitute(prompt=prompt)
     
     llm = ChatGoogleGenerativeAI(
         api_key=gemini_api_key_workflow_generation,
         model="gemini-2.5-flash",
         temperature=0.4,
-        streaming=True,
         convert_system_message_to_human=True
     )
     response_text = ""
@@ -73,14 +73,13 @@ async def create_workflow_from_prompt(prompt:str) -> Dict[str,Any]:
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to parse JSON: {e}\nRaw output:\n{response_text}")
 
-@tool
+@tool(description=explain_workflow_description)
 async def explain_workflow(workflow_json:Dict[str,Any]) -> Dict:
     try:
         llm = ChatGoogleGenerativeAI(
             api_key=gemini_api_key_workflow_generation,
             model="gemini-2.5-flash",
             temperature=0.3,
-            streaming=True,
             convert_system_message_to_human=True
         )
         messages = explaination_prompt_template.format_messages(
@@ -102,14 +101,13 @@ async def explain_workflow(workflow_json:Dict[str,Any]) -> Dict:
             "error": f"Error explaining workflow: {str(e)}"
         }
     
-@tool 
+@tool(description=modify_workflow_description)
 async def modify_workflow(workflow_json:Dict[str,Any],custom_changes:str):
     try:
         llm = ChatGoogleGenerativeAI(
                 api_key=gemini_api_key_workflow_generation,
                 model="gemini-2.5-flash",
                 temperature=0.4,
-                streaming=True,
                 convert_system_message_to_human=True
             )
         modification_prompt = modification_prompt_template.format_messages(

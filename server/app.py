@@ -12,7 +12,7 @@ from prompt_templates import system_prompt_template
 from pydantic_models import ChatMessage,ChatHistoryResponse
 from langchain.agents import initialize_agent,AgentType
 from langchain.memory import ConversationBufferWindowMemory
-
+from langchain_core.runnables import RunnableConfig
 load_dotenv()
 app = FastAPI()
 
@@ -32,7 +32,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 llm = ChatGoogleGenerativeAI(
     api_key=GEMINI_API_KEY,
     model="gemini-2.5-flash",
-    streaming=True
+    temperature = 0.3
 )
 
 tools = [
@@ -51,19 +51,20 @@ memory = ConversationBufferWindowMemory(
 agent = initialize_agent(
     llm = llm,
     tools=tools,
-    prompt=system_prompt_template,
-    agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
+    #prompt=system_prompt_template,
+    agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
     memory=memory,
     system_message=system_prompt_template.format(),
     verbose=True,
-    handle_parsing_errors= True
+    handle_parsing_errors= True, 
 )
+
 
 @app.get("/")
 async def root():
     return {"message":"n8n Agentic Workflow Builder"}
 
-@app.get("/agent/stream")
+@app.post("/agent/stream")
 async def stream_agent_response(chat_input:ChatMessage):
     session_id = chat_input.session_id
     user_message = chat_input.message
@@ -79,11 +80,15 @@ async def stream_agent_response(chat_input:ChatMessage):
     })
     queue = Queue()
     cb_handler = CustomCallBackHandler(queue)
-
+    config = RunnableConfig(callbacks=[cb_handler])
     async def generate_response():
         try:
             agent_task = asyncio.create_task(
-                agent.arun(input=user_message,callbacks=[cb_handler])
+                agent.ainvoke(
+                    {"input": user_message},
+                    config=config
+                )
+                #agent.arun(input=user_message,callbacks=[cb_handler])
             )
 
             agent_response = ""
@@ -94,12 +99,14 @@ async def stream_agent_response(chat_input:ChatMessage):
                     data = json.loads(message)
 
                     if data["type"] == "token":
+                        print("Token Received")
                         agent_response += data["content"]
                         yield f"data: {message}\n\n"
                     
                     elif data["type"] in ["thought", "observation", "error", "final_answer_start", "final_answer_end"]:
+                        print("Thought or Observation Received")
                         yield f"data: {message}\n\n"
-                    
+                        
                     elif data["type"] == "end":
                         yield f"data: {message}\n\n"
                         break
