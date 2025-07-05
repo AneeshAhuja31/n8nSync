@@ -60,45 +60,73 @@ Remember: Generated workflows are created as inactive by default. Users must man
 
 creation_prompt_template = Template("""
     You are an expert in building automation workflows using n8n.
-    Your goal is to generate a complete and valid n8n workflow JSON based on the user's request.
+    Your goal is to generate a complete, syntactically valid, and functional n8n workflow JSON based on the user's request.
 
-    **n8n Workflow Structure Guidelines:**
+    **n8n Workflow JSON Structure Guidelines:**
 
-    * **Overall JSON Object:**
+    * **Root Object:**
         ```json
         {
-        "name": "Workflow Name",
-        "nodes": [ /* Array of node objects */ ],
-        "connections": { /* Object defining node connections */ },
-        "settings": { "executionOrder": "v1" },
-        "active": false
+            "name": "Descriptive Workflow Name",
+            "nodes": [ /* Array of node objects */ ],
+            "connections": { /* Object defining node connections */ },
+            "settings": { "executionOrder": "v1" },
+            "active": false
         }
         ```
-    * **Node Object Structure:**
-        * `"name"`: A descriptive string for the node (e.g., "Schedule Weekly", "Get Subscribers").
-        * `"type"`: The full n8n node type string (e.g., "n8n-nodes-base.cron", "n8n-nodes-base.googleSheets", "n8n-nodes-base.gmail", "n8n-nodes-base.set", "n8n-nodes-base.githubTrigger", "n8n-nodes-base.if", "n8n-nodes-base.slack", "n8n-nodes-base.webhook", "n8n-nodes-base.function", "n8n-nodes-base.httpRequest", "n8n-nodes-base.mysql", "n8n-nodes-base.splitInBatches", "n8n-nodes-base.emailSend", "n8n-nodes-base.stripe").
-        * `"typeVersion"`: Integer, typically 1 or 2.
-        * `"position"`: `[x, y]` array, for visual layout. Start with `[240, 300]` for the first node and increment `x` by `220` for subsequent nodes in a linear flow, adjusting `y` for branching.
-        * `"parameters"`: A dictionary specific to the node type and its configuration.
-            * **Expressions:** Use `={{...}}` for dynamic values, referencing previous node outputs (e.g., `={{$node['NodeName'].json['field']}}`) or built-in functions (e.g., `{{DateTime.now().toFormat('MMM dd,YYYY')}}`).
-            * **Credential Fields:** If a node requires credentials (e.g., `googleSheetsApi`, `gmailApi`, `clearbitApi`, `openWeatherApi`, `slackApi`, `stripeApi`, `mysql`) include a `"credentials"` object with the appropriate credential type and ID (use placeholder `"[YOUR_CREDENTIAL_ID]"`).
-                Example: `"credentials": { "gmailApi": "[YOUR_CREDENTIAL_ID]" }`
-            * **Function Node `functionCode`**: This should contain valid JavaScript. Remember to escape newlines as `\\n`.
-        * `"id"`: A unique identifier (UUID recommended, but a string can also be used). You can generate simple sequential IDs for the examples or omit them if the LLM can infer.
 
-    * **Connections Object Structure:**
-        * Keys are node names (from the `"name"` field of the source node).
-        * Values are objects, often with a `"main"` key containing an array of arrays, each inner array specifying a connection target.
-        * Each target connection is an object: `{"node": "Target Node Name", "type": "main", "index": 0}`.
-        * For IF nodes, the `true` branch is `index: 0` and the `false` branch is `index: 1`.
+    * **Node Object Structure (within the "nodes" array):**
+        * `"name"`: A unique, descriptive, and concise string for each node (e.g., "Trigger on Schedule", "Fetch Data", "Process Items", "Send Notification").
+        * `"type"`: The full n8n node type string (e.g., "n8n-nodes-base.cron", "n8n-nodes-base.googleSheets", "n8n-nodes-base.gmail", "n8n-nodes-base.set", "n8n-nodes-base.if", "n8n-nodes-base.slack", "n8n-nodes-base.webhook", "n8n-nodes-base.function", "n8n-nodes-base.httpRequest", "n8n-nodes-base.emailSend", "n8n-nodes-base.splitInBatches"). Prioritize base nodes unless a specific integration is requested.
+        * `"typeVersion"`: Integer, almost always `1`. Use `2` only if specifically known for a node.
+        * `"position"`: `[x, y]` array for visual layout.
+            * Start the first node at `[240, 300]`.
+            * For linear flows, increment `x` by `220` for each subsequent node (e.g., `[460, 300]`, `[680, 300]`).
+            * Adjust `y` for branching or parallel paths (e.g., `[460, 450]` for a branch below).
+        * `"parameters"`: An object holding the node-specific configuration.
+            * **Expressions:** Use `={{...}}` for dynamic values. To reference data from previous node outputs, access properties of the `json` object. For example, to get a field named 'firstName', the value would be `={{ json.firstName }}`. For complex transformations, combine with JavaScript (e.g., `={{ 'Hello ' + json.firstName }}`). Ensure correct escaping of quotes within expressions.
+            * **List/Array Parameters:** For parameters expecting a list of items (e.g., `Set` node's `values` array, `HTTP Request` node's `queryParameters`), ensure the value is a valid JSON array of objects, even if it contains only one item.
+            * **Credential Fields:** If a node requires credentials (e.g., `gmailApi`, `slackApi`, `googleSheetsApi`, `openWeatherApi`), include a `"credentials"` object:
+                Example: `"credentials": { "gmailApi": "[YOUR_CREDENTIAL_ID]" }`
+                Use placeholder `"[YOUR_CREDENTIAL_ID]"` for the actual ID.
+            * **Code in Function Nodes:** For `n8n-nodes-base.function` (or `functionItem`), the JavaScript code goes into the `functionCode` parameter. Escape newlines (`\n` becomes `\\n`) and quotes within the code correctly. The input data is `items`, and the output should be `items`.
+                Example: `"functionCode": "for (const item of items) {\\n  item.json.fullName = item.json.firstName + ' ' + item.json.lastName;\\n}\\nreturn items;"`
+        * `"id"`: **[IMPORTANT] OMIT THIS FIELD.** n8n automatically assigns IDs on import. Including them can sometimes lead to conflicts or errors during generation.
+
+    * **Connections Object Structure (within "connections"):**
+        * Keys are the **`name`** of the **source node**.
+        * Values are objects containing keys like `"main"`, `"output"`, `"error"`, or `"true"`, `"false"` for `If` nodes.
+        * The value for these keys **must be an array of objects**, where each object defines a single connection target.
+            * **Correct Example:**
+                ```json
+                "NodeA": {
+                    "main": [
+                        { "node": "NodeB", "type": "main", "index": 0 }
+                    ]
+                },
+                "NodeB": {
+                    "main": [
+                        { "node": "NodeC", "type": "main", "index": 0 }
+                    ]
+                },
+                "IfNode": {
+                    "true": [
+                        { "node": "TruePathNode", "type": "main", "index": 0 }
+                    ],
+                    "false": [
+                        { "node": "FalsePathNode", "type": "main", "index": 0 }
+                    ]
+                }
+                ```
+            * **AVOID nested arrays like `[[{...}]]`** for connection targets, as this causes the "not iterable" error.
 
     * **Workflow Settings:** Always include `"settings": { "executionOrder": "v1" }` and `"active": false`.
 
-    **IMPORTANT:**
-    * **Generate ONLY the JSON object.** Do not include any explanatory text, markdown outside the JSON, or conversational elements.
-    * **Ensure the JSON is syntactically correct and complete.**
-    * **Use placeholder values for API keys and IDs** like "YOUR_API_KEY", "[YOUR_CREDENTIAL_ID]", "1ABC123_your_sheet_id", "your-username", "your-repo" where appropriate, to indicate user configuration is needed.
-    * **Node positions should increment logically** to represent a clear flow.
+    **IMPORTANT GENERATION RULES:**
+    * **GENERATE ONLY THE COMPLETE JSON OBJECT.** Do not include any preambles, explanations, markdown outside the JSON, or conversational elements.
+    * **Ensure the generated JSON is syntactically correct and fully valid.** Validate all commas, brackets, and quotes.
+    * **Use clear, descriptive placeholder values** for API keys, URLs, IDs, and other sensitive or user-specific configurations (e.g., `YOUR_API_KEY`, `[YOUR_CREDENTIAL_ID]`, `https://your-webhook-url.com/`, `your_sheet_id`, `your-channel-name`, `your-username`, `your-repo`, `your_email@example.com`).
+    * **Maintain logical and incrementing node positions** for visual clarity.
 
     Now, generate an n8n workflow JSON based on the following user prompt:
     ${prompt}

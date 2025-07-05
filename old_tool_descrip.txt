@@ -11,6 +11,11 @@ fetch_exisiting_workflow_description="""
     - workflow_id (str): Required. The unique identifier of the workflow to retrieve
     - uri (str): Optional. The n8n instance URI (defaults to "localhost:5678")
     
+    Returns (ALWAYS RETURNS STRING BUT IN DIFFERENT FORMAT SPECIFIED):
+    - str: Success response with workflow data or error information 
+        Success format: {"success": True, "workflow": {...workflow_json...}}
+        Error format: {"success": False, "error": "Error message"}
+    
     Example usage scenarios:
     - "Show me workflow with ID abc123"
     - "I want to see the details of workflow xyz456"
@@ -30,6 +35,12 @@ get_all_exisiting_workflows_description = """
     Input Parameters:
     - uri (str): Optional. The n8n instance URI (defaults to "localhost:5678")
     
+    Returns (ALWAYS RETURNS STRING BUT IN DIFFERENT FORMAT SPECIFIED):
+    - str: Success response with list of workflows or error information
+        Success format: {"success": True, "workflow": [{"name": "...", "id": "...", "active": true/false}, ...]}
+        Error format: {"success": False, "error": "Error message", "status_code": int}
+        Empty list format: [] (when no workflows exist)
+    
     Example usage scenarios:
     - "Show me all my workflows"
     - "List all workflows in my n8n instance"
@@ -48,6 +59,16 @@ create_workflow_from_prompt_description = """
     
     Input Parameters:
     - prompt (str): Required. Natural language description of the desired workflow functionality
+    
+    Returns (ALWAYS RETURNS STRING BUT IN DIFFERENT FORMAT SPECIFIED):
+    - str: Complete n8n workflow JSON object ready for import
+        Format: {
+            "name": "Workflow Name",
+            "nodes": [...],
+            "connections": {...},
+            "settings": {"executionOrder": "v1"},
+            "active": false
+        }
     
     Important Notes:
     - The returned workflow will have placeholder credential IDs that need to be configured
@@ -74,6 +95,11 @@ explain_workflow_description = """
     
     Input Parameters:
     - workflow_json (Dict[str, Any]): Required. Complete n8n workflow JSON object to analyze
+    
+    Returns (ALWAYS RETURNS STRING BUT IN DIFFERENT FORMAT SPECIFIED):
+    - str: Analysis result with explanation or error information
+        Success format: {"success": True, "explanation": "Detailed explanation..."}
+        Error format: {"success": False, "error": "Error message"}
     
     The explanation includes:
     - Main purpose of the workflow
@@ -102,9 +128,14 @@ modify_workflow_description = """
     - workflow_json (Dict[str, Any]): Required. The original workflow JSON to be modified
     - custom_changes (str): Required. Description of the changes to be made
     
+    Returns (ALWAYS RETURNS STRING BUT IN DIFFERENT FORMAT SPECIFIED):
+    - str: Modified workflow result or error information
+        Success format: {"success": True, "modified_workflow": {...complete_workflow_json...}}
+        Error format: {"success": False, "error": "Error message"}
+    
     The modified workflow:
     - Maintains existing structure and format
-    - Incorporates requested changes  
+    - Incorporates requested changes
     - Preserves valid node connections
     - Returns complete, valid n8n workflow JSON
     

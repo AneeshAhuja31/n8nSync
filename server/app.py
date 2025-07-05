@@ -45,20 +45,20 @@ tools = [
 
 memory = ConversationBufferWindowMemory(
     memory_key="chat_history",
-    return_messages=True
+    return_messages=True,
+    output_key="output"
 )
 
 agent = initialize_agent(
     llm = llm,
     tools=tools,
-    #prompt=system_prompt_template,
+    return_intermediate_steps=True,
     agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
     memory=memory,
     system_message=system_prompt_template.format(),
     verbose=True,
     handle_parsing_errors= True, 
 )
-
 
 @app.get("/")
 async def root():
@@ -99,12 +99,10 @@ async def stream_agent_response(chat_input:ChatMessage):
                     data = json.loads(message)
 
                     if data["type"] == "token":
-                        print("Token Received")
                         agent_response += data["content"]
                         yield f"data: {message}\n\n"
                     
                     elif data["type"] in ["thought", "observation", "error", "final_answer_start", "final_answer_end"]:
-                        print("Thought or Observation Received")
                         yield f"data: {message}\n\n"
                         
                     elif data["type"] == "end":
