@@ -78,7 +78,7 @@ async def stream_agent_response(chat_input:ChatMessage):
         "content": user_message,
         "timestamp": asyncio.get_event_loop().time()
     })
-    queue = Queue()
+    queue = Queue() 
     cb_handler = CustomCallBackHandler(queue)
     config = RunnableConfig(callbacks=[cb_handler])
     async def generate_response():

@@ -58,79 +58,76 @@ Remember: Generated workflows are created as inactive by default. Users must man
 
 """)
 
-creation_prompt_template = Template("""
-    You are an expert in building automation workflows using n8n.
-    Your goal is to generate a complete, syntactically valid, and functional n8n workflow JSON based on the user's request.
+creation_prompt_template = """
+## SYSTEM INSTRUCTION: CREATE WORKFLOW FROM PROMPT
 
-    **n8n Workflow JSON Structure Guidelines:**
+You are an expert in generating **valid n8n workflow JSON** files based on natural language instructions.
 
-    * **Root Object:**
-        ```json
-        {
-            "name": "Descriptive Workflow Name",
-            "nodes": [ /* Array of node objects */ ],
-            "connections": { /* Object defining node connections */ },
-            "settings": { "executionOrder": "v1" },
-            "active": false
-        }
-        ```
+Your task is to read a user's prompt and output a complete and correct n8n workflow JSON that can be directly imported into n8n.
 
-    * **Node Object Structure (within the "nodes" array):**
-        * `"name"`: A unique, descriptive, and concise string for each node (e.g., "Trigger on Schedule", "Fetch Data", "Process Items", "Send Notification").
-        * `"type"`: The full n8n node type string (e.g., "n8n-nodes-base.cron", "n8n-nodes-base.googleSheets", "n8n-nodes-base.gmail", "n8n-nodes-base.set", "n8n-nodes-base.if", "n8n-nodes-base.slack", "n8n-nodes-base.webhook", "n8n-nodes-base.function", "n8n-nodes-base.httpRequest", "n8n-nodes-base.emailSend", "n8n-nodes-base.splitInBatches"). Prioritize base nodes unless a specific integration is requested.
-        * `"typeVersion"`: Integer, almost always `1`. Use `2` only if specifically known for a node.
-        * `"position"`: `[x, y]` array for visual layout.
-            * Start the first node at `[240, 300]`.
-            * For linear flows, increment `x` by `220` for each subsequent node (e.g., `[460, 300]`, `[680, 300]`).
-            * Adjust `y` for branching or parallel paths (e.g., `[460, 450]` for a branch below).
-        * `"parameters"`: An object holding the node-specific configuration.
-            * **Expressions:** Use `={{...}}` for dynamic values. To reference data from previous node outputs, access properties of the `json` object. For example, to get a field named 'firstName', the value would be `={{ json.firstName }}`. For complex transformations, combine with JavaScript (e.g., `={{ 'Hello ' + json.firstName }}`). Ensure correct escaping of quotes within expressions.
-            * **List/Array Parameters:** For parameters expecting a list of items (e.g., `Set` node's `values` array, `HTTP Request` node's `queryParameters`), ensure the value is a valid JSON array of objects, even if it contains only one item.
-            * **Credential Fields:** If a node requires credentials (e.g., `gmailApi`, `slackApi`, `googleSheetsApi`, `openWeatherApi`), include a `"credentials"` object:
-                Example: `"credentials": { "gmailApi": "[YOUR_CREDENTIAL_ID]" }`
-                Use placeholder `"[YOUR_CREDENTIAL_ID]"` for the actual ID.
-            * **Code in Function Nodes:** For `n8n-nodes-base.function` (or `functionItem`), the JavaScript code goes into the `functionCode` parameter. Escape newlines (`\n` becomes `\\n`) and quotes within the code correctly. The input data is `items`, and the output should be `items`.
-                Example: `"functionCode": "for (const item of items) {\\n  item.json.fullName = item.json.firstName + ' ' + item.json.lastName;\\n}\\nreturn items;"`
-        * `"id"`: **[IMPORTANT] OMIT THIS FIELD.** n8n automatically assigns IDs on import. Including them can sometimes lead to conflicts or errors during generation.
+---
 
-    * **Connections Object Structure (within "connections"):**
-        * Keys are the **`name`** of the **source node**.
-        * Values are objects containing keys like `"main"`, `"output"`, `"error"`, or `"true"`, `"false"` for `If` nodes.
-        * The value for these keys **must be an array of objects**, where each object defines a single connection target.
-            * **Correct Example:**
-                ```json
-                "NodeA": {
-                    "main": [
-                        { "node": "NodeB", "type": "main", "index": 0 }
-                    ]
-                },
-                "NodeB": {
-                    "main": [
-                        { "node": "NodeC", "type": "main", "index": 0 }
-                    ]
-                },
-                "IfNode": {
-                    "true": [
-                        { "node": "TruePathNode", "type": "main", "index": 0 }
-                    ],
-                    "false": [
-                        { "node": "FalsePathNode", "type": "main", "index": 0 }
-                    ]
-                }
-                ```
-            * **AVOID nested arrays like `[[{...}]]`** for connection targets, as this causes the "not iterable" error.
+### 🔧 Input
+- **prompt**: {{ prompt }}
 
-    * **Workflow Settings:** Always include `"settings": { "executionOrder": "v1" }` and `"active": false`.
+---
 
-    **IMPORTANT GENERATION RULES:**
-    * **GENERATE ONLY THE COMPLETE JSON OBJECT.** Do not include any preambles, explanations, markdown outside the JSON, or conversational elements.
-    * **Ensure the generated JSON is syntactically correct and fully valid.** Validate all commas, brackets, and quotes.
-    * **Use clear, descriptive placeholder values** for API keys, URLs, IDs, and other sensitive or user-specific configurations (e.g., `YOUR_API_KEY`, `[YOUR_CREDENTIAL_ID]`, `https://your-webhook-url.com/`, `your_sheet_id`, `your-channel-name`, `your-username`, `your-repo`, `your_email@example.com`).
-    * **Maintain logical and incrementing node positions** for visual clarity.
+### 📋 Output Requirements
 
-    Now, generate an n8n workflow JSON based on the following user prompt:
-    ${prompt}
-""")
+- Output a valid **JSON object** matching n8n’s workflow schema.
+- The JSON **must** be a complete workflow that n8n can import via the UI.
+- All fields must use the correct **data types and naming conventions**.
+- Always set `"active": false` in the output.
+
+---
+
+### ⚠️ JSON Structural Rules
+
+1. `id` fields inside `nodes[]` must be **integers** (e.g., `1`, `2`, `3`).
+2. Each `node.name` must be **unique** and match the `"connections"` keys.
+3. `connections` must be an **object**, not an array. Keys should be the **`name`** of the source node.
+4. `connections[fromNodeName]` should contain a `"main"` key with a 2D array of connection objects.
+   Example:
+   ```json
+   "connections": {
+     "Node A": {
+       "main": [
+         [
+           {
+             "node": "Node B",
+             "type": "main",
+             "index": 0
+           }
+         ]
+       ]
+     }
+   }
+5. position: Must be a 2-element array of integers, like [x, y].
+6. type: Must match a valid n8n node name like "n8n-nodes-base.httpRequest".
+7. typeVersion: Usually 1.
+8. parameters: Must follow the node’s input schema (e.g., url, method, text).x
+9. credentials: Use placeholders (e.g., "id": "your-credential-id") if required.
+10. Email addresses, API keys, and secrets should be obvious placeholders.
+11. All node connections must be valid and sequentially wired.
+
+🧠 When to Use This
+Use this generation pattern if the prompt:
+* Describes a new automation
+* Mentions workflows, integration, or scheduling
+* Instructs you to build something for n8n
+
+✅ Examples of Prompts
+* "Create a workflow that emails weather updates every morning"
+* "Build a workflow that fetches GitHub PRs and posts to Slack"
+* "Automate file upload to Google Drive from Dropbox"
+
+🔁 Response Format
+
+{ ...workflow JSON here... }
+
+Do not include any explanation or comments. Output the raw JSON only.
+"""
+
 
 explaination_prompt_template = SystemMessagePromptTemplate.from_template("""
     You are an expert n8n workflow analyzer. Analyze the provided workflow JSON and explain in clear, human-readable terms:

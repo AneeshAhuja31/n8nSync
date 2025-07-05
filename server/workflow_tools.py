@@ -47,7 +47,7 @@ async def get_all_exisiting_workflows(uri:str="localhost:5678") -> str:
 
 @tool(description=create_workflow_from_prompt_description)
 async def create_workflow_from_prompt(prompt:str) -> str:
-    full_prompt = creation_prompt_template.substitute(prompt=prompt)
+    full_prompt = creation_prompt_template.replace("{{ prompt }}", prompt)
     
     llm = ChatGoogleGenerativeAI(
         api_key=gemini_api_key_workflow_generation,
