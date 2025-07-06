@@ -6,13 +6,16 @@ from custom_callback_handler import CustomCallBackHandler
 from asyncio import Queue
 import asyncio
 import os
+import json
+from typing import Dict, List, Any
 from dotenv import load_dotenv
 from workflow_tools import *
+from pydantic_models import ChatMessage, ChatHistoryResponse
 from prompt_templates import system_prompt_template
-from pydantic_models import ChatMessage,ChatHistoryResponse
-from langchain.agents import initialize_agent,AgentType
+from langchain.agents import initialize_agent, AgentType
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
+
 load_dotenv()
 app = FastAPI()
 
@@ -32,16 +35,16 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 llm = ChatGoogleGenerativeAI(
     api_key=GEMINI_API_KEY,
     model="gemini-2.5-flash",
-    temperature = 0.3
+    temperature=0.3
 )
 
 tools = [
     fetch_exisiting_workflow,
     get_all_exisiting_workflows,
     create_workflow_from_prompt,
-    explain_workflow,
+    explain_workflow,  
     modify_workflow
-]
+] 
 
 memory = ConversationBufferWindowMemory(
     memory_key="chat_history",
@@ -50,22 +53,22 @@ memory = ConversationBufferWindowMemory(
 )
 
 agent = initialize_agent(
-    llm = llm,
+    llm = llm, 
     tools=tools,
     return_intermediate_steps=True,
     agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
     memory=memory,
-    system_message=system_prompt_template.format(),
     verbose=True,
     handle_parsing_errors= True, 
+    agent_kwargs={"system_prompt":system_prompt_template}
 )
 
 @app.get("/")
 async def root():
-    return {"message":"n8n Agentic Workflow Builder"}
+    return {"message": "n8n Agentic Workflow Builder"}
 
 @app.post("/agent/stream")
-async def stream_agent_response(chat_input:ChatMessage):
+async def stream_agent_response(chat_input: ChatMessage):
     session_id = chat_input.session_id
     user_message = chat_input.message
 
@@ -78,24 +81,25 @@ async def stream_agent_response(chat_input:ChatMessage):
         "content": user_message,
         "timestamp": asyncio.get_event_loop().time()
     })
-    queue = Queue() 
+    
+    queue = Queue()
     cb_handler = CustomCallBackHandler(queue)
     config = RunnableConfig(callbacks=[cb_handler])
+    
     async def generate_response():
+        agent_response = ""
+        
         try:
             agent_task = asyncio.create_task(
                 agent.ainvoke(
                     {"input": user_message},
                     config=config
                 )
-                #agent.arun(input=user_message,callbacks=[cb_handler])
             )
-
-            agent_response = ""
 
             while True:
                 try:
-                    message = await asyncio.wait_for(queue.get(),timeout=1.0)
+                    message = await asyncio.wait_for(queue.get(), timeout=1.0)
                     data = json.loads(message)
 
                     if data["type"] == "token":
@@ -118,19 +122,24 @@ async def stream_agent_response(chat_input:ChatMessage):
                     yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
                     break
             
+            # Get final result if not already processed
             if not agent_task.done():
                 try:
                     final_result = await agent_task
-                    if isinstance(final_result, str):
+                    if isinstance(final_result, dict) and 'output' in final_result and not agent_response:
+                        agent_response = final_result['output']
+                    elif isinstance(final_result, str) and not agent_response:
                         agent_response = final_result
                 except Exception as e:
                     yield f"data: {json.dumps({'type': 'error', 'content': f'Agent error: {str(e)}'})}\n\n"
             
+            # Save to chat history
             chat_sessions[session_id].append({
                 "role": "assistant", 
-                "content": agent_response.strip(),
+                "content": agent_response.strip() if agent_response else "",
                 "timestamp": asyncio.get_event_loop().time()
             })
+            
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'content': f'Stream error: {str(e)}'})}\n\n"
     
@@ -165,4 +174,3 @@ async def clear_chat_history(session_id: str):
 @app.get("/chat/sessions")
 async def get_all_sessions():
     return {"sessions": list(chat_sessions.keys())}
-            

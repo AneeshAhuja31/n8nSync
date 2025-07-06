@@ -2,7 +2,7 @@ from langchain.callbacks.base import AsyncCallbackHandler
 from langchain_core.agents import AgentAction, AgentFinish
 from asyncio import Queue
 import json
-
+   
 class CustomCallBackHandler(AsyncCallbackHandler):
     def __init__(self, queue: Queue):
         self.queue = queue

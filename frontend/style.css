@@ -294,21 +294,23 @@ body[data-sidebar-open="false"] .sidebar-open-btn {
     font-weight: 900;
 }
 
-/* Thoughts Container - Discrete and ChatGPT-like */
 .thoughts-container {
     background-color: rgba(26, 26, 26, 0.3);
     border-radius: 8px;
-    margin-bottom: 0.5rem;
+    margin-bottom: 2px; /* Reduced from 0.5rem */
     backdrop-filter: blur(10px);
     animation: fadeIn 0.3s ease-in-out;
     transition: all 0.3s ease;
+    overflow: hidden;
 }
 
 .thoughts-container.collapsed {
     background-color: rgba(26, 26, 26, 0.1);
+    height: 85px;
 }
 
 .thoughts-header {
+  height: 40px;
     padding: 0.5rem 0.75rem;
     cursor: pointer;
     display: flex;
@@ -318,8 +320,10 @@ body[data-sidebar-open="false"] .sidebar-open-btn {
     font-size: 0.85rem;
     color: #888;
     transition: color 0.2s ease;
+    margin-top: -50px;
+    column-gap: 0.5rem;
 }
-
+/* k */
 .thoughts-header:hover {
     color: #aaa;
 }
@@ -342,12 +346,15 @@ body[data-sidebar-open="false"] .sidebar-open-btn {
 .thoughts-content {
     padding: 0 0.75rem 0.5rem;
     display: block;
+    margin-top: -50px;
+    margin-bottom: -80px;
 }
 
 .thoughts-list {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    margin-top: -30px;
 }
 
 .thought-item {

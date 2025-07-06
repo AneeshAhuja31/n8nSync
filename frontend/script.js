@@ -36,8 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
         thoughtsContainer.className = 'thoughts-container';
         thoughtsContainer.innerHTML = `
             <div class="thoughts-header" onclick="toggleThoughts(this)">
-                <span class="thoughts-label">Thinking...</span>
-                <span class="thoughts-toggle">▼</span>
+                <span class="thoughts-toggle">▽ Thinking...</span>
+
             </div>
             <div class="thoughts-content">
                 <div class="thoughts-list"></div>
@@ -158,11 +158,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (content.style.display === 'none') {
             content.style.display = 'block';
-            toggle.textContent = '▼';
+            toggle.textContent = '▽ Thinking...';
             thoughtsContainer.classList.remove('collapsed');
         } else {
             content.style.display = 'none';
-            toggle.textContent = '▶';
+            toggle.textContent = '▷ Thinking...';
             thoughtsContainer.classList.add('collapsed');
         }
     };
