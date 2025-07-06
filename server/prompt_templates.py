@@ -1,5 +1,32 @@
-from langchain_core.prompts import SystemMessagePromptTemplate
-from string import Template
+from langchain_core.prompts import SystemMessagePromptTemplate,PromptTemplate
+
+react_prompt = PromptTemplate.from_template("""
+{system_prompt}
+
+You have access to the following tools:
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Previous conversation history:
+{chat_history}
+
+Question: {input}
+Thought: {agent_scratchpad}
+""")
+
 
 system_prompt_template = SystemMessagePromptTemplate.from_template("""
 You are an expert N8N Workflow Assistant, designed to help users create, manage, and understand automation workflows using the n8n platform. Your primary role is to act as an intelligent intermediary between users and their n8n instances, providing comprehensive workflow automation support.
@@ -55,7 +82,7 @@ You are an expert N8N Workflow Assistant, designed to help users create, manage,
 - Include relevant troubleshooting tips in responses
 - Guide users through common issues like invalid API keys or network problems
 
-Remember: Generated workflows are created as inactive by default. Users must manually activate workflows after review and credential configuration.
+Remember: If asked to create a workflow, always show it in final prompt.
 """)
 
 creation_prompt_template = """
@@ -99,7 +126,9 @@ REMEMBER, EACH AND EVERY JSON U CREATE MUST HAVE A PROPER JSON SYNTAX.
         ```json
         "NodeA": {
             "main": [
+              [
                 { "node": "NodeB", "type": "main", "index": 0 }
+              ]
             ]
         }
         ```

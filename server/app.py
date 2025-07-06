@@ -11,8 +11,8 @@ from typing import Dict, List, Any
 from dotenv import load_dotenv
 from workflow_tools import *
 from pydantic_models import ChatMessage, ChatHistoryResponse
-from prompt_templates import system_prompt_template
-from langchain.agents import initialize_agent, AgentType
+from prompt_templates import system_prompt_template,react_prompt
+from langchain.agents import create_react_agent,AgentExecutor
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
 
@@ -39,8 +39,8 @@ llm = ChatGoogleGenerativeAI(
 )
 
 tools = [
-    fetch_exisiting_workflow,
-    get_all_exisiting_workflows,
+    fetch_existing_workflow,
+    get_all_existing_workflows,
     create_workflow_from_prompt,
     explain_workflow,  
     modify_workflow
@@ -52,15 +52,19 @@ memory = ConversationBufferWindowMemory(
     output_key="output"
 )
 
-agent = initialize_agent(
-    llm = llm, 
+agent = create_react_agent(
+    llm=llm,
     tools=tools,
-    return_intermediate_steps=True,
-    agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+    prompt=react_prompt
+)
+
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
     memory=memory,
     verbose=True,
-    handle_parsing_errors= True, 
-    agent_kwargs={"system_prompt":system_prompt_template}
+    handle_parsing_errors=True,
+    return_intermediate_steps=True
 )
 
 @app.get("/")
@@ -90,9 +94,13 @@ async def stream_agent_response(chat_input: ChatMessage):
         agent_response = ""
         
         try:
+            system_prompt_content = system_prompt_template.format()
             agent_task = asyncio.create_task(
-                agent.ainvoke(
-                    {"input": user_message},
+                agent_executor.ainvoke(
+                    {
+                        "input": user_message,
+                        "system_prompt":system_prompt_content
+                    },
                     config=config
                 )
             )

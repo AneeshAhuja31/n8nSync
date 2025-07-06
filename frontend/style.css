@@ -445,3 +445,213 @@ body[data-sidebar-open="false"] .sidebar-open-btn {
         font-size: 0.75rem;
     }
 }
+/* Code Template Container */
+.code-template-container {
+    background-color: #1A1A1A;
+    border: 1px solid #333;
+    border-radius: 8px;
+    margin: 1rem 0;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.code-template-container:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border-color: #4A7B7A;
+}
+
+/* Code Template Header */
+.code-template-header {
+    background-color: #2A2A2A;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    backdrop-filter: blur(10px);
+    margin-top: -50px;
+    margin-bottom: -50px;
+}
+
+.code-template-title {
+    color: #C879B5;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Copy Button */
+/* Copy Button */
+.copy-code-btn {
+    background-color: #4A7B7A;
+    color: #E0E0E0;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: all 0.2s ease;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-width: 110px; /* Fixed minimum width */
+    justify-content: center; /* Center the content */
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+.copy-code-btn:hover {
+    background-color: #5E9291;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.copy-code-btn:active {
+    transform: translateY(0);
+}
+
+.copy-code-btn.copied {
+    background-color: #28a745;
+    color: white;
+}
+
+.copy-code-btn i {
+    font-size: 0.8rem;
+}
+
+/* Code Template Content */
+.code-template-content {
+    padding: 1rem;
+    background-color: #0F0F0F;
+    overflow-x: auto;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.code-template-content pre {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #E0E0E0;
+    overflow: visible;
+}
+
+.code-template-content code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: pre;
+    word-wrap: normal;
+    overflow-wrap: normal;
+}
+
+/* JSON Syntax Highlighting */
+.json-code {
+    color: #E0E0E0;
+}
+
+/* JSON syntax highlighting using CSS (basic) */
+.code-template-content .json-code {
+    color: #E0E0E0;
+}
+
+/* Custom scrollbar for code content */
+.code-template-content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.code-template-content::-webkit-scrollbar-track {
+    background: #1A1A1A;
+    border-radius: 4px;
+}
+
+.code-template-content::-webkit-scrollbar-thumb {
+    background-color: #4A7B7A;
+    border-radius: 4px;
+    border: 2px solid #1A1A1A;
+}
+
+.code-template-content::-webkit-scrollbar-thumb:hover {
+    background-color: #5E9291;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .code-template-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .copy-code-btn {
+        align-self: stretch;
+        justify-content: center;
+    }
+    
+    .code-template-content {
+        padding: 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    .code-template-content pre {
+        font-size: 0.8rem;
+    }
+}
+
+/* Animation for code appearance */
+@keyframes codeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.code-template-container {
+    animation: codeSlideIn 0.4s ease-out;
+}
+
+/* Improved JSON syntax highlighting with more specific selectors */
+.code-template-content .json-code {
+    color: #E0E0E0;
+}
+
+/* Simple JSON highlighting patterns */
+.code-template-content pre code::before {
+    content: '';
+}
+
+/* Add some visual polish */
+.code-template-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #4A7B7A, #C879B5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.code-template-container:hover::before {
+    opacity: 1;
+}
+
+/* Make sure the container is positioned relative for the pseudo-element */
+.code-template-container {
+    position: relative;
+}

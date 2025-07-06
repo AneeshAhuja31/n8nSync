@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
         thoughtsContainer.innerHTML = `
             <div class="thoughts-header" onclick="toggleThoughts(this)">
                 <span class="thoughts-toggle">▽ Thinking...</span>
-
             </div>
             <div class="thoughts-content">
                 <div class="thoughts-list"></div>
@@ -55,9 +54,100 @@ document.addEventListener('DOMContentLoaded', () => {
         return answerContainer.querySelector('.answer-content');
     }
     
+    function formatJsonInContent(content) {
+        // Look for both ```json and json``` patterns
+        const jsonRegex = /```json\s*([\s\S]*?)\s*```|json```\s*([\s\S]*?)\s*```/g;
+        
+        return content.replace(jsonRegex, (match, jsonContent1, jsonContent2) => {
+            // Use whichever capture group matched
+            const trimmedJson = (jsonContent1 || jsonContent2).trim();
+            
+            try {
+                // Try to parse and format the JSON
+                const parsed = JSON.parse(trimmedJson);
+                const formattedJson = JSON.stringify(parsed, null, 2);
+                
+                return `<div class="code-template-container">
+                    <div class="code-template-header">
+                        <span class="code-template-title">JSON</span>
+                        <button class="copy-code-btn" onclick="copyToClipboard(this)" data-code="${btoa(formattedJson)}">
+                            <i class="fas fa-copy"></i> Copy JSON
+                        </button>
+                    </div>
+                    <div class="code-template-content">
+                        <pre><code class="json-code">${escapeHtml(formattedJson)}</code></pre>
+                    </div>
+                </div>`;
+            } catch (e) {
+                // If JSON parsing fails, display as plain text
+                return `<div class="code-template-container">
+                    <div class="code-template-header">
+                        <span class="code-template-title">Code Block</span>
+                        <button class="copy-code-btn" onclick="copyToClipboard(this)" data-code="${btoa(trimmedJson)}">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <div class="code-template-content">
+                        <pre><code>${escapeHtml(trimmedJson)}</code></pre>
+                    </div>
+                </div>`;
+            }
+        });
+    }
+
+    // Enhanced function to detect any JSON-like content in the response
+    function detectAndFormatJson(content) {
+        // First try the markdown code block detection
+        let processedContent = formatJsonInContent(content);
+        
+        // If no markdown code blocks found, try to detect standalone JSON objects
+        if (processedContent === content) {
+            // Look for JSON object patterns (starting with { and ending with })
+            const jsonObjectRegex = /(\{[\s\S]*?\})/g;
+            
+            processedContent = content.replace(jsonObjectRegex, (match, jsonCandidate) => {
+                // Only process if it looks like a substantial JSON object (more than just {})
+                if (jsonCandidate.length > 10) {
+                    try {
+                        const parsed = JSON.parse(jsonCandidate);
+                        // Check if it's likely an n8n workflow (has nodes, connections, etc.)
+                        if (parsed.nodes && parsed.connections) {
+                            const formattedJson = JSON.stringify(parsed, null, 2);
+                            
+                            return `<div class="code-template-container">
+                                <div class="code-template-header">
+                                    <span class="code-template-title">n8n Workflow JSON</span>
+                                    <button class="copy-code-btn" onclick="copyToClipboard(this)" data-code="${btoa(formattedJson)}">
+                                        <i class="fas fa-copy"></i> Copy JSON
+                                    </button>
+                                </div>
+                                <div class="code-template-content">
+                                    <pre><code class="json-code">${escapeHtml(formattedJson)}</code></pre>
+                                </div>
+                            </div>`;
+                        }
+                    } catch (e) {
+                        // Not valid JSON, return original
+                    }
+                }
+                return match;
+            });
+        }
+        
+        return processedContent;
+    }
+
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
     async function streamResponse(message, agentMessageDiv) {
         let thoughtsContainer = null;
         let answerContainer = null;
+        let fullAnswerContent = '';
         
         try {
             const response = await fetch('http://localhost:8000/agent/stream', {
@@ -96,12 +186,23 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             
                             handleStreamData(data, thoughtsContainer, answerContainer);
+                            
+                            // Collect full answer content for final processing
+                            if (data.type === 'token') {
+                                fullAnswerContent += data.content;
+                            }
                         } catch (e) {
                             console.warn('Failed to parse SSE data:', line);
                         }
                     }
                 }
             }
+            
+            // Process the final answer for JSON code blocks
+            if (answerContainer && fullAnswerContent) {
+                const processedContent = detectAndFormatJson(fullAnswerContent);                answerContainer.innerHTML = processedContent;
+            }
+            
         } catch (error) {
             if (!answerContainer) {
                 answerContainer = createAnswerContainer(agentMessageDiv);
@@ -124,8 +225,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'token':
                 if (answerContainer) {
-                    // Stream tokens directly to answer
-                    answerContainer.innerHTML += data.content;
+                    // For streaming, we'll just accumulate the text
+                    // The final processing will handle JSON formatting
+                    const currentContent = answerContainer.textContent || '';
+                    answerContainer.textContent = currentContent + data.content;
                 }
                 break;
             case 'error':
@@ -164,6 +267,46 @@ document.addEventListener('DOMContentLoaded', () => {
             content.style.display = 'none';
             toggle.textContent = '▷ Thinking...';
             thoughtsContainer.classList.add('collapsed');
+        }
+    };
+    
+    window.copyToClipboard = async function(button) {
+        const encodedCode = button.getAttribute('data-code');
+        const code = atob(encodedCode); // Decode the base64 encoded JSON
+        
+        try {
+            await navigator.clipboard.writeText(code);
+            
+            // Visual feedback
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            button.classList.add('copied');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('copied');
+            }, 2000);
+            
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = code;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            // Visual feedback
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            button.classList.add('copied');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('copied');
+            }, 2000);
         }
     };
 });

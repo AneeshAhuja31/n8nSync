@@ -1,4 +1,4 @@
-from langchain.tools import tool
+from langchain_core.tools import Tool
 import requests
 from typing import Dict, Any, List
 from tool_descriptions import fetch_exisiting_workflow_description, get_all_exisiting_workflows_description, create_workflow_from_prompt_description, explain_workflow_description, modify_workflow_description
@@ -14,8 +14,7 @@ load_dotenv()
 gemini_api_key_workflow_generation = os.getenv("GEMINI_API_KEY_WORKFLOW_GENERATION")
 n8n_api_key = os.getenv("N8N_API_KEY")
 
-@tool(description=fetch_exisiting_workflow_description)
-def fetch_exisiting_workflow(workflow_id: str, uri: str = "localhost:5678") -> Dict[str, Any]:
+def _fetch_exisiting_workflow(workflow_id: str, uri: str = "localhost:5678") -> Dict[str, Any]:
     try:
         response = requests.get(f"http://{uri}/api/v1/workflows/{workflow_id}", headers={
             "accept": "application/json",
@@ -27,8 +26,7 @@ def fetch_exisiting_workflow(workflow_id: str, uri: str = "localhost:5678") -> D
     except Exception as e:
         return {"success": False, "error": f"Request failed: {str(e)}"}
 
-@tool(description=get_all_exisiting_workflows_description)
-def get_all_exisiting_workflows(uri: str = "localhost:5678") -> Dict[str, Any]:
+def _get_all_exisiting_workflows(uri: str = "localhost:5678") -> Dict[str, Any]:
     try:
         response = requests.get(f"http://{uri}/api/v1/workflows", headers={
             "accept": "application/json",
@@ -52,8 +50,7 @@ def get_all_exisiting_workflows(uri: str = "localhost:5678") -> Dict[str, Any]:
     except Exception as e:
         return {"success": False, "error": f"Request failed: {str(e)}"}
 
-@tool(description=create_workflow_from_prompt_description)
-def create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
+def _create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
     try:
         full_prompt = creation_prompt_template.replace('[[USER_PROMPT]]', prompt)
 
@@ -86,8 +83,7 @@ def create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
     except Exception as e:
         return {"success": False, "error": f"Workflow creation failed: {str(e)}"}
 
-@tool(description=explain_workflow_description)
-def explain_workflow(workflow_json: Dict[str, Any]) -> Dict[str, Any]:
+def _explain_workflow(workflow_json: Dict[str, Any]) -> Dict[str, Any]:
     try:
         llm = ChatGoogleGenerativeAI(
             api_key=gemini_api_key_workflow_generation,
@@ -115,8 +111,7 @@ def explain_workflow(workflow_json: Dict[str, Any]) -> Dict[str, Any]:
             "error": f"Error explaining workflow: {str(e)}"
         }
 
-@tool(description=modify_workflow_description)
-def modify_workflow(workflow_json: Dict[str, Any], custom_changes: str) -> Dict[str, Any]:
+def _modify_workflow(workflow_json: Dict[str, Any], custom_changes: str) -> Dict[str, Any]:
     """Modify an existing workflow"""
     try:
         llm = ChatGoogleGenerativeAI(
@@ -159,3 +154,33 @@ def modify_workflow(workflow_json: Dict[str, Any], custom_changes: str) -> Dict[
             "success": False,
             "error": f"Error modifying workflow: {str(e)}"
         }
+
+fetch_existing_workflow = Tool(
+    name="fetch_existing_workflow",
+    description=fetch_exisiting_workflow_description,
+    func=_fetch_exisiting_workflow
+)
+
+get_all_existing_workflows = Tool(
+    name="get_all_existing_workflows", 
+    description=get_all_exisiting_workflows_description,
+    func=_get_all_exisiting_workflows
+)
+
+create_workflow_from_prompt = Tool(
+    name="create_workflow_from_prompt",
+    description=create_workflow_from_prompt_description,
+    func=_create_workflow_from_prompt
+)
+
+explain_workflow = Tool(
+    name="explain_workflow",
+    description=explain_workflow_description,
+    func=_explain_workflow
+)
+
+modify_workflow = Tool(
+    name="modify_workflow", 
+    description=modify_workflow_description,
+    func=_modify_workflow
+)
