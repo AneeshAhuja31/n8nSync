@@ -68,7 +68,7 @@ Thought: I now know the final answer
 Final Answer: the final answer to the original input question
 
 CRITICAL: You must follow this format exactly. Do not include any additional text, explanations, or content outside of this structure.
-IMPORTANT: Any Json you return in the FINAL ANSWER must start with json``` and end with ```
+
 Begin!
 
 Previous conversation history:
