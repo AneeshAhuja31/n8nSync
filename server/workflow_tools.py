@@ -58,7 +58,7 @@ def _create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
             api_key=gemini_api_key_workflow_generation,
             model="gemini-2.5-flash",
             temperature=0.4,
-            convert_system_message_to_human=True
+            #convert_system_message_to_human=True
         )
         response_text = ""
         
@@ -72,7 +72,7 @@ def _create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
         elif response_text.startswith("```"):
             response_text = response_text.replace("```", "").strip("`\n ")
         response_text=response_text.replace("'",'"')
-        
+
         try:
             parsed_json = json.loads(response_text)
             return parsed_json
@@ -87,7 +87,7 @@ def _explain_workflow(workflow_json: Dict[str, Any]) -> Dict[str, Any]:
             api_key=gemini_api_key_workflow_generation,
             model="gemini-2.5-flash",
             temperature=0.3,
-            convert_system_message_to_human=True
+            #convert_system_message_to_human=True
         )
         messages = explaination_prompt_template.format(
             workflow_json=json.dumps(workflow_json, indent=2)
@@ -116,7 +116,7 @@ def _modify_workflow(workflow_json: Dict[str, Any], custom_changes: str) -> Dict
             api_key=gemini_api_key_workflow_generation,
             model="gemini-2.5-flash",
             temperature=0.4,
-            convert_system_message_to_human=True
+            #convert_system_message_to_human=True
         )
         modification_prompt = modification_prompt_template.format(
             existing_workflow_json=json.dumps(workflow_json, indent=2),

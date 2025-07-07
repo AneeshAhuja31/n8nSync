@@ -64,7 +64,8 @@ agent_executor = AgentExecutor(
     memory=memory,
     verbose=True,
     handle_parsing_errors=True,
-    return_intermediate_steps=True
+    return_intermediate_steps=True,
+    early_stopping_method="force"
 )
 
 @app.get("/")
