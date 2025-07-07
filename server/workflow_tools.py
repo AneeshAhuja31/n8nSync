@@ -14,9 +14,9 @@ load_dotenv()
 gemini_api_key_workflow_generation = os.getenv("GEMINI_API_KEY_WORKFLOW_GENERATION")
 n8n_api_key = os.getenv("N8N_API_KEY")
 
-def _fetch_exisiting_workflow(workflow_id: str, uri: str = "localhost:5678") -> Dict[str, Any]:
+def _fetch_exisiting_workflow(workflow_id: str) -> Dict[str, Any]:
     try:
-        response = requests.get(f"http://{uri}/api/v1/workflows/{workflow_id}", headers={
+        response = requests.get(f"http://localhost:5678/api/v1/workflows/{workflow_id}", headers={
             "accept": "application/json",
             "X-N8N-API-KEY": f"{n8n_api_key}"
         })
@@ -26,9 +26,9 @@ def _fetch_exisiting_workflow(workflow_id: str, uri: str = "localhost:5678") -> 
     except Exception as e:
         return {"success": False, "error": f"Request failed: {str(e)}"}
 
-def _get_all_exisiting_workflows(uri: str = "localhost:5678") -> Dict[str, Any]:
+def _get_all_exisiting_workflows() -> Dict[str, Any]:
     try:
-        response = requests.get(f"http://{uri}/api/v1/workflows", headers={
+        response = requests.get(f"http://localhost:5678/api/v1/workflows", headers={
             "accept": "application/json",
             "X-N8N-API-KEY": f"{n8n_api_key}"
         })
@@ -72,9 +72,7 @@ def _create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
         elif response_text.startswith("```"):
             response_text = response_text.replace("```", "").strip("`\n ")
         response_text=response_text.replace("'",'"')
-        print("//////////////////")
-        print(response_text)
-        print("/////////////////////")
+        
         try:
             parsed_json = json.loads(response_text)
             return parsed_json
@@ -164,7 +162,7 @@ fetch_existing_workflow = Tool(
 get_all_existing_workflows = Tool(
     name="get_all_existing_workflows", 
     description=get_all_exisiting_workflows_description,
-    func=_get_all_exisiting_workflows
+    func=lambda _:_get_all_exisiting_workflows()
 )
 
 create_workflow_from_prompt = Tool(

@@ -144,6 +144,61 @@ document.addEventListener('DOMContentLoaded', () => {
         return div.innerHTML;
     }
     
+    function renderMarkdown(text) {
+        // First, preserve JSON code blocks by temporarily replacing them
+        const jsonBlocks = [];
+        let jsonIndex = 0;
+        
+        // Extract and store JSON blocks
+        text = text.replace(/```json\s*([\s\S]*?)\s*```|json```\s*([\s\S]*?)\s*```/g, (match) => {
+            const placeholder = `__JSON_BLOCK_${jsonIndex}__`;
+            jsonBlocks[jsonIndex] = match;
+            jsonIndex++;
+            return placeholder;
+        });
+        
+        // Apply markdown transformations
+        text = text
+            // Headers
+            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+            
+            // Bold and italic
+            .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            
+            // Code (inline)
+            .replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
+            
+            // Links
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+            
+            // Lists (simple implementation)
+            .replace(/^[\s]*[-*+][\s]+(.*)$/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+            
+            // Line breaks
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+        
+        // Wrap in paragraphs if not already wrapped
+        if (!text.startsWith('<h') && !text.startsWith('<ul') && !text.startsWith('<ol')) {
+            text = '<p>' + text + '</p>';
+        }
+        
+        // Restore JSON blocks with proper formatting
+        jsonBlocks.forEach((block, index) => {
+            const placeholder = `__JSON_BLOCK_${index}__`;
+            const formattedBlock = formatJsonInContent(block);
+            text = text.replace(placeholder, formattedBlock);
+        });
+        
+        return text;
+    }
+
+    // Update the streamResponse function to use markdown rendering
     async function streamResponse(message, agentMessageDiv) {
         let thoughtsContainer = null;
         let answerContainer = null;
@@ -198,9 +253,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // Process the final answer for JSON code blocks
+            // Process the final answer with markdown rendering and JSON formatting
             if (answerContainer && fullAnswerContent) {
-                const processedContent = detectAndFormatJson(fullAnswerContent);                answerContainer.innerHTML = processedContent;
+                const renderedContent = renderMarkdown(fullAnswerContent);
+                answerContainer.innerHTML = renderedContent;
             }
             
         } catch (error) {

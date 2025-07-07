@@ -11,7 +11,7 @@ from typing import Dict, List, Any
 from dotenv import load_dotenv
 from workflow_tools import *
 from pydantic_models import ChatMessage, ChatHistoryResponse
-from prompt_templates import system_prompt_template,react_prompt
+from prompt_templates import combined_react_prompt
 from langchain.agents import create_react_agent,AgentExecutor
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
@@ -55,7 +55,7 @@ memory = ConversationBufferWindowMemory(
 agent = create_react_agent(
     llm=llm,
     tools=tools,
-    prompt=react_prompt
+    prompt=combined_react_prompt
 )
 
 agent_executor = AgentExecutor(
@@ -94,12 +94,10 @@ async def stream_agent_response(chat_input: ChatMessage):
         agent_response = ""
         
         try:
-            system_prompt_content = system_prompt_template.format()
             agent_task = asyncio.create_task(
                 agent_executor.ainvoke(
                     {
                         "input": user_message,
-                        "system_prompt":system_prompt_content
                     },
                     config=config
                 )

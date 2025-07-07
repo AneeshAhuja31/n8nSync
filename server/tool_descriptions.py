@@ -8,8 +8,7 @@ fetch_exisiting_workflow_description="""
     - User asks about a particular workflow by ID
     
     Input Parameters:
-    - workflow_id (str): Required. The unique identifier of the workflow to retrieve
-    - uri (str): Optional. The n8n instance URI (defaults to "localhost:5678")
+    - workflow_id (str): Required. This must be alphanumeric. If in a dictionary/json extract it from there. The unique identifier of the workflow to retrieve
     
     Example usage scenarios:
     - "Show me workflow with ID abc123"
@@ -26,9 +25,6 @@ get_all_exisiting_workflows_description = """
     - You need to help user find a workflow by name
     - User wants to browse their existing workflows
     - User doesn't know the specific workflow ID
-    
-    Input Parameters:
-    - uri (str): Optional. The n8n instance URI (defaults to "localhost:5678")
     
     Example usage scenarios:
     - "Show me all my workflows"
