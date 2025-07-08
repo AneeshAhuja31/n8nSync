@@ -155,23 +155,105 @@ Here is the n8n workflow:
 Provide a clear explanation of what this workflow does.
 """)
 
+# modification_prompt_template = SystemMessagePromptTemplate.from_template("""
+# You are an expert in n8n workflow modification. Given the existing workflow JSON and requested changes, modify the workflow accordingly.
+
+# **Original Workflow:**
+# ```json
+# {existing_workflow_json}
+# ```
+
+# **Requested Changes:**
+# {custom_changes}
+
+# **Instructions:**
+# - Modify the workflow JSON to incorporate the requested changes
+# - Maintain the existing workflow structure and format
+# - Ensure all node connections remain valid
+# - Generate ONLY the modified JSON workflow - no explanatory text
+# - The output should be a complete, valid n8n workflow JSON
+
+# Return the modified workflow JSON:
+# """)
+
 modification_prompt_template = SystemMessagePromptTemplate.from_template("""
-You are an expert in n8n workflow modification. Given the existing workflow JSON and requested changes, modify the workflow accordingly.
+NEVER EVER USE SINGLE QUOTES in your json output, ALWAYS USE DOUBLE QUOTES (")
+
+You are an expert in n8n workflow modification. Your goal is to modify the existing workflow JSON based on the user's request while maintaining full functionality and proper structure.
+
+REMEMBER, EACH AND EVERY JSON U CREATE MUST HAVE A PROPER JSON SYNTAX.
+
+Generate ONLY the modified JSON workflow - no explanatory text, no markdown formatting, no additional content.
+
+**n8n Workflow JSON Structure Guidelines (MUST FOLLOW):**
+
+**Root Object:**
+{{
+  "name": "Descriptive Workflow Name",
+  "nodes": [ /* Array of node objects */ ],
+  "connections": {{ /* Object defining node connections */ }},
+  "settings": {{
+    "executionOrder": "v1"
+  }},
+  "active": false
+}}
+
+**Every node MUST contain a `position` field:**
+The `position` field is required for each node. It should be a two-element array representing X and Y coordinates for visual layout in the editor.
+Example: "position": [300, 100]
+
+**Connections Format (CRITICAL):**
+Each connection entry must contain:
+- "node": target node name
+- "type": always "main"
+- "index": usually 0
+
+Example:
+"connections": {{
+  "Node A": {{
+    "main": [
+      [
+        {{
+          "node": "Node B",
+          "type": "main",
+          "index": 0
+        }}
+      ]
+    ]
+  }},
+  "Node B": {{
+    "main": [[]]
+  }}
+}}
+
+**Node Structure Requirements:**
+- Each node must have: "id", "name", "type", "typeVersion", "position", "parameters"
+- Node names must be unique within the workflow
+- All references to nodes in connections must match exact node names
+- Parameters object must contain valid configuration for the node type
+
+**Modification Rules:**
+1. When adding new nodes, ensure they have unique names and proper positioning
+2. When modifying existing nodes, preserve their core structure
+3. When changing connections, ensure all referenced nodes exist
+4. When removing nodes, remove all connections to/from those nodes
+5. Maintain proper JSON syntax throughout
+6. Preserve workflow name unless specifically requested to change it
+7. Keep "active": false and "executionOrder": "v1" unless modification requires changes
 
 **Original Workflow:**
 ```json
 {existing_workflow_json}
-```
-
-**Requested Changes:**
+Requested Changes:
 {custom_changes}
+Instructions:
 
-**Instructions:**
-- Modify the workflow JSON to incorporate the requested changes
-- Maintain the existing workflow structure and format
-- Ensure all node connections remain valid
-- Generate ONLY the modified JSON workflow - no explanatory text
-- The output should be a complete, valid n8n workflow JSON
+Modify the workflow JSON to incorporate the requested changes
+Maintain the existing workflow structure and format following the guidelines above
+Ensure all node connections remain valid and properly formatted
+Verify all node names are unique and referenced correctly in connections
+Generate ONLY the modified JSON workflow - no explanatory text, no markdown formatting
+The output should be a complete, valid n8n workflow JSON that follows all structural requirements
 
 Return the modified workflow JSON:
 """)

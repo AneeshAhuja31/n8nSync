@@ -88,12 +88,12 @@ def _explain_workflow(workflow_json: Dict[str, Any]) -> Dict[str, Any]:
             temperature=0.3,
             #convert_system_message_to_human=True
         )
-        messages = explaination_prompt_template.format(
+        explaination_prompt_string = explaination_prompt_template.format(
             workflow_json=json.dumps(workflow_json, indent=2)
         )
         response_text = ""
         
-        for chunk in llm.stream(messages):
+        for chunk in llm.stream(explaination_prompt_string.content):
             if chunk.content:
                 response_text += chunk.content
         
@@ -115,13 +115,7 @@ def _modify_workflow(input_dict: str) -> Dict[str, Any]:
             try:
                 parsed_input = ast.literal_eval(input_dict)
                 workflow_json = parsed_input.get("workflow_json", {})
-                print("//////////////////")
-                print(workflow_json)
-                print("//////////////////")
                 custom_changes = parsed_input.get("custom_changes", "")
-                print("//////////////////")
-                print(custom_changes)
-                print("//////////////////")
             except (ValueError, SyntaxError) as e:
                 return {"success": False, "error": f"Invalid input format: {e}"} 
             
