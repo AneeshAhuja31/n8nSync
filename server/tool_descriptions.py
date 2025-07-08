@@ -1,6 +1,9 @@
 fetch_exisiting_workflow_description="""
     Fetch a specific workflow from an n8n instance by its workflow ID.
     
+    IMPORTANT: The input of this tool is only a string which is the alphanumeric identifer of workflow.
+    DO NOT PASS A Dict as input.
+
     Use this tool when:
     - User wants to view details of a specific workflow
     - User provides a workflow ID and wants to see its configuration
@@ -8,7 +11,7 @@ fetch_exisiting_workflow_description="""
     - User asks about a particular workflow by ID
     
     Input Parameters:
-    - workflow_id (str): Required. This must be alphanumeric. If in a dictionary/json extract it from there. The unique identifier of the workflow to retrieve
+    - workflow_id (str): Required. This must be alphanumeric. The unique identifier of the workflow to retrieve
     
     Example usage scenarios:
     - "Show me workflow with ID abc123"
@@ -86,6 +89,9 @@ explain_workflow_description = """
     """
 
 modify_workflow_description = """
+    IMPORTANT: The input of this tool which is input_dict will be a string in the format (again format not datatype) of a dictionary (in which both keys and values are strings) with keys:
+        workflow_json : which is the workflow json to be modified, it is to be in proper dictionary format.
+        custom_changes : this is the custom changes the user wants on the workflow json.
     Modify an existing workflow based on specific change requirements.
     
     Use this tool when:
@@ -95,8 +101,8 @@ modify_workflow_description = """
     - User wants to enhance or fix an existing automation
     
     Input Parameters:
-    - workflow_json (Dict[str, Any]): Required. The original workflow JSON to be modified
-    - custom_changes (str): Required. Description of the changes to be made
+    - input_dict: (str): Required. Where input_dict will be a string in format of a dictionary.
+    Format of input_dict: Dictionary with workflow_json key and custom_changes key, where workflow_json value is the workflow json (Dict) to be modified, and custom_changes value is the (str) prompt which specifies the modification. 
     
     The modified workflow:
     - Maintains existing structure and format

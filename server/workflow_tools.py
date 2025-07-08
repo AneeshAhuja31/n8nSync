@@ -7,8 +7,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
 import os
 import json
-from string import Template
-
+import ast
 load_dotenv()
 
 gemini_api_key_workflow_generation = os.getenv("GEMINI_API_KEY_WORKFLOW_GENERATION")
@@ -21,7 +20,7 @@ def _fetch_exisiting_workflow(workflow_id: str) -> Dict[str, Any]:
             "X-N8N-API-KEY": f"{n8n_api_key}"
         })
         if response.status_code == 200:
-            return {"success": True, "workflow": response.json()}
+            return response.json()
         return {"success": False, "error": f"Error in retrieving workflow with id: {workflow_id}"}
     except Exception as e:
         return {"success": False, "error": f"Request failed: {str(e)}"}
@@ -109,22 +108,45 @@ def _explain_workflow(workflow_json: Dict[str, Any]) -> Dict[str, Any]:
             "error": f"Error explaining workflow: {str(e)}"
         }
 
-def _modify_workflow(workflow_json: Dict[str, Any], custom_changes: str) -> Dict[str, Any]:
-    """Modify an existing workflow"""
+def _modify_workflow(input_dict: str) -> Dict[str, Any]:
+    """Extract workflow_json and custom_changes from input"""
     try:
+        if isinstance(input_dict, str):
+            try:
+                parsed_input = ast.literal_eval(input_dict)
+                workflow_json = parsed_input.get("workflow_json", {})
+                print("//////////////////")
+                print(workflow_json)
+                print("//////////////////")
+                custom_changes = parsed_input.get("custom_changes", "")
+                print("//////////////////")
+                print(custom_changes)
+                print("//////////////////")
+            except (ValueError, SyntaxError) as e:
+                return {"success": False, "error": f"Invalid input format: {e}"} 
+            
+        else:
+            return {"success": False, "error": "Input must be a dictionary or JSON string"}
+        
+        if not workflow_json or not custom_changes:
+            return {"success": False, "error": "Both workflow_json and custom_changes are required"}
+        
         llm = ChatGoogleGenerativeAI(
             api_key=gemini_api_key_workflow_generation,
             model="gemini-2.5-flash",
-            temperature=0.4,
-            #convert_system_message_to_human=True
+            temperature=0.4
         )
-        modification_prompt = modification_prompt_template.format(
+        
+        # Format the message properly as a string
+        formatted_message = modification_prompt_template.format(
             existing_workflow_json=json.dumps(workflow_json, indent=2),
             custom_changes=custom_changes
         )
+        
         response_text = ""
         
-        for chunk in llm.stream(modification_prompt):
+        # Stream the formatted message content
+        for chunk in llm.stream(formatted_message.content):
             if chunk.content:
                 response_text += chunk.content
         
@@ -152,7 +174,7 @@ def _modify_workflow(workflow_json: Dict[str, Any], custom_changes: str) -> Dict
             "success": False,
             "error": f"Error modifying workflow: {str(e)}"
         }
-
+    
 fetch_existing_workflow = Tool(
     name="fetch_existing_workflow",
     description=fetch_exisiting_workflow_description,
