@@ -54,33 +54,6 @@
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const nameFromUrl = params.get('name');
-    const emailFromUrl = params.get('email');
-
-    if (nameFromUrl && emailFromUrl) {
-      localStorage.setItem('userName', nameFromUrl);
-      localStorage.setItem('userEmail', emailFromUrl);
-    }
-
-    const storedName = localStorage.getItem('userName');
-    const storedEmail = localStorage.getItem('userEmail');
-
-    if (!storedName || !storedEmail) {
-      window.location.href = 'http://localhost:3000/login.html';
-    } else {
-      document.getElementById('welcome').innerText = `Welcome ${storedName}.`;
-    }
-
-    document.getElementById('logoutBtn').addEventListener('click',() => {
-      localStorage.removeItem('userName');
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('n8n_api_key');
-      localStorage.removeItem('gemini_api_key');
-
-      window.location.href = "http://localhost:3000/login.html";
-    })
-
     
     document.addEventListener('DOMContentLoaded', () => {
       const body = document.body;
@@ -108,5 +81,6 @@
     });
   </script>
   <script src="script.js"></script>
+  <script src="auth.js"></script>
 </body>
 </html>

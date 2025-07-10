@@ -51,13 +51,6 @@
             <p>Already have an account? <a href="http://localhost:3000/login.html">Sign in here</a></p>
         </div>
     </div>
-    <script>
-        const storedName = localStorage.getItem('userName');
-        const storedEmail = localStorage.getItem('userEmail');
-
-        if(storedName || storedEmail){
-            window.location.href = "http://localhost:3000/dashboard.html"
-        }
-    </script>
+    <script src="checkexistingauth.js"></script>
 </body>
 </html>

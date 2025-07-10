@@ -1,6 +1,6 @@
-from fastapi import FastAPI,Request
+from fastapi import FastAPI,Request,HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse,RedirectResponse
+from fastapi.responses import StreamingResponse,RedirectResponse,JSONResponse
 from langchain_google_genai import ChatGoogleGenerativeAI
 from custom_callback_handler import CustomCallBackHandler
 from asyncio import Queue
@@ -16,6 +16,7 @@ from langchain.agents import create_react_agent,AgentExecutor
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
 import httpx
+from middleware_jwt import create_jwt_token,verify_jwt_token,JWT_EXPIRATION_HOURS
 
 load_dotenv()
 app = FastAPI()
@@ -77,6 +78,7 @@ agent_executor = AgentExecutor(
 @app.get("/")
 async def root():
     return {"message": "n8n Agentic Workflow Builder"}
+
 @app.get("/login")
 async def login():
     google_auth_url = (
@@ -116,11 +118,46 @@ async def auth_callback(request:Request):
             headers={'Authorization': f'Bearer {access_token}'}
         )
         userinfo = userinfo_response.json()
-    
-    name = userinfo.get('name')
-    email = userinfo.get('email')
 
-    return RedirectResponse(f"http://localhost:3000/dashboard.html?name={name}&email={email}")
+    user_data = {
+        "name":userinfo.get('name'),
+        "email":userinfo.get('email')
+    }
+    jwt_token = create_jwt_token(user_data)
+    response = RedirectResponse(f"http://localhost:3000/dashboard.html")
+    response.set_cookie(
+        key="auth_token",
+        value=jwt_token,
+        httponly=True,
+        secure=False, #set to true in prod
+        samesite="lax",
+        max_age=JWT_EXPIRATION_HOURS*3600
+    )
+    return response
+
+@app.get("/auth/validate")
+async def validate_token(request:Request):
+    token = request.cookies.get("auth_token")
+    if not token:  #check if token exists
+        raise HTTPException(status_code=401, detail="No token provided")
+    try:
+        payload = verify_jwt_token(token)
+        return {
+            "valid":True,
+            "user":{
+                "name":payload.get("name"),
+                "email":payload.get("email")
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=401,detail=str(e))
+
+@app.post("/auth/logout")
+async def logout():
+    response = {"message":"Logged out successfully"}
+    response = JSONResponse(content=response)
+    response.delete_cookie("auth_token")
+    return response
 
 @app.post("/agent/stream")
 async def stream_agent_response(chat_input: ChatMessage):

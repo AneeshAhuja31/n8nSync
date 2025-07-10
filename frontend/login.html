@@ -40,13 +40,6 @@
             <p>Don't have an account? <a href="http://localhost:3000/signup.html">Sign up here</a></p>
         </div>
     </div>
-    <script>
-        const storedName = localStorage.getItem('userName');
-        const storedEmail = localStorage.getItem('userEmail');
-
-        if(storedName || storedEmail){
-            window.location.href = "http://localhost:3000/dashboard.html"
-        }
-    </script>
+    <script src="checkexistingauth.js"></script>
 </body>
 </html>
