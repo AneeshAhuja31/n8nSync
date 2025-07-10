@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="loginstyle.css"    
+    <link rel="stylesheet" href="loginstyle.css">  
 </head>
 <body>
     <div class="login-container">
         <div class="login-header">
-            <h1>Welcome Back</h1>
-            <p>Sign in to your account</p>
+            <h1>Login</h1>
         </div>
 
         <form class="login-form">
@@ -41,5 +40,13 @@
             <p>Don't have an account? <a href="http://localhost:3000/signup.html">Sign up here</a></p>
         </div>
     </div>
+    <script>
+        const storedName = localStorage.getItem('userName');
+        const storedEmail = localStorage.getItem('userEmail');
+
+        if(storedName || storedEmail){
+            window.location.href = "http://localhost:3000/dashboard.html"
+        }
+    </script>
 </body>
 </html>

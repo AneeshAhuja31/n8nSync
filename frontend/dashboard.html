@@ -19,6 +19,8 @@
         <a href="#">New Chat</a>
         <a href="#">History</a>
         <a href="#">Settings</a>
+        <a href="#" id="logoutBtn">Logout</a>
+        
       </nav>
     </aside>
 
@@ -27,8 +29,7 @@
         <i class="fas fa-bars"></i> </button>
 
       <div class="chat-messages">
-        <div class="message agent">
-          Hello! How can I help you automate your workflow today?
+        <div class="message agent" id="welcome">
         </div>
 
         <div class="message user">
@@ -53,6 +54,34 @@
   </div>
 
   <script>
+    const params = new URLSearchParams(window.location.search);
+    const nameFromUrl = params.get('name');
+    const emailFromUrl = params.get('email');
+
+    if (nameFromUrl && emailFromUrl) {
+      localStorage.setItem('userName', nameFromUrl);
+      localStorage.setItem('userEmail', emailFromUrl);
+    }
+
+    const storedName = localStorage.getItem('userName');
+    const storedEmail = localStorage.getItem('userEmail');
+
+    if (!storedName || !storedEmail) {
+      window.location.href = 'http://localhost:3000/login.html';
+    } else {
+      document.getElementById('welcome').innerText = `Welcome ${storedName}.`;
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click',() => {
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('n8n_api_key');
+      localStorage.removeItem('gemini_api_key');
+
+      window.location.href = "http://localhost:3000/login.html";
+    })
+
+    
     document.addEventListener('DOMContentLoaded', () => {
       const body = document.body;
       const closeSidebarBtn = document.querySelector('.sidebar-toggle-btn'); // Button inside sidebar

@@ -1,6 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse,RedirectResponse
 from langchain_google_genai import ChatGoogleGenerativeAI
 from custom_callback_handler import CustomCallBackHandler
 from asyncio import Queue
@@ -15,6 +15,7 @@ from prompt_templates import combined_react_prompt
 from langchain.agents import create_react_agent,AgentExecutor
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
+import httpx
 
 load_dotenv()
 app = FastAPI()
@@ -31,6 +32,11 @@ app.add_middleware(
 chat_sessions: Dict[str, List[Dict[str, Any]]] = {}
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+REDIRECT_URI = os.getenv("REDIRECT_URI")
+
+SCOPES = "openid email profile"
 
 llm = ChatGoogleGenerativeAI(
     api_key=GEMINI_API_KEY,
@@ -71,6 +77,50 @@ agent_executor = AgentExecutor(
 @app.get("/")
 async def root():
     return {"message": "n8n Agentic Workflow Builder"}
+@app.get("/login")
+async def login():
+    google_auth_url = (
+        f"https://accounts.google.com/o/oauth2/v2/auth"
+        f"?client_id={GOOGLE_CLIENT_ID}"
+        f"&response_type=code"
+        f"&redirect_uri={REDIRECT_URI}"
+        f"&scope={SCOPES}"
+        f"&access_type=offline"
+        f"&prompt=consent"
+    )
+    return RedirectResponse(google_auth_url)
+
+@app.get("/auth/callback")
+async def auth_callback(request:Request):
+    code = request.query_params.get("code")
+    if not code:
+        return RedirectResponse(url="http://localhost:3000/error.html")
+    
+    token_url = "https://oauth2.googleapis.com/token"
+    data = {
+        'code': code,
+        'client_id': GOOGLE_CLIENT_ID,
+        'client_secret': GOOGLE_CLIENT_SECRET,
+        'redirect_uri': REDIRECT_URI,
+        'grant_type': 'authorization_code',
+    }
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(token_url,data=data)
+        token_json = token_response.json()
+    
+    access_token = token_json.get('access_token')
+
+    async with httpx.AsyncClient() as client:
+        userinfo_response = await client.get(
+            'https://www.googleapis.com/oauth2/v3/userinfo',
+            headers={'Authorization': f'Bearer {access_token}'}
+        )
+        userinfo = userinfo_response.json()
+    
+    name = userinfo.get('name')
+    email = userinfo.get('email')
+
+    return RedirectResponse(f"http://localhost:3000/dashboard.html?name={name}&email={email}")
 
 @app.post("/agent/stream")
 async def stream_agent_response(chat_input: ChatMessage):
