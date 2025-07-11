@@ -17,7 +17,7 @@ from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
 import httpx
 from middleware_jwt import create_jwt_token,verify_jwt_token,JWT_EXPIRATION_HOURS
-
+from db.user_db import create_or_update_user
 load_dotenv()
 app = FastAPI()
 
@@ -123,6 +123,12 @@ async def auth_callback(request:Request):
         "name":userinfo.get('name'),
         "email":userinfo.get('email')
     }
+    response = await create_or_update_user(user_data)
+    if response:
+        print("User Inserted")
+    else:
+        print("User Updated")
+        
     jwt_token = create_jwt_token(user_data)
     response = RedirectResponse(f"http://localhost:3000/dashboard.html")
     response.set_cookie(
