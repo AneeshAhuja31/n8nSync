@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     const chatMessages = document.querySelector('.chat-messages');
     const chatForm = document.querySelector('.chat-input');
@@ -8,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle form submission
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!checkApiKeysBeforeChat()) {
+            return;
+        }
         const message = chatInput.value.trim();
         if (!message) return;
         
@@ -365,4 +369,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 2000);
         }
     };
+
+    function checkApiKeysBeforeChat() {
+    const n8nApiKey = localStorage.getItem('n8nApiKey');
+    const geminiApiKey = localStorage.getItem('geminiApiKey');
+    
+    if (!n8nApiKey || !geminiApiKey) {
+        showApiKeyOverlay();
+        return false;
+    }
+    return true;
+}
 });

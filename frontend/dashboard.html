@@ -8,7 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body data-sidebar-open="true"> <div class="container">
+<body data-sidebar-open="true"> 
+  <div class="container">
     <aside class="sidebar">
       <div class="sidebar-header">
         <h1 class="logo">n8n Agent</h1>
@@ -51,6 +52,30 @@
         <button type="submit">Send</button>
       </form>
     </main>
+  </div>
+  <!-- API Key Overlay -->
+  <div class="api-key-overlay" id="apiKeyOverlay" style="display: none;">
+    <div class="api-key-modal">
+      <h2>API Keys Required</h2>
+      <p style="color: #E0E0E0; margin-bottom: 1.5rem; text-align: center;">
+        Please enter your API keys to use the chat interface.
+      </p>
+      <form class="api-key-form" id="apiKeyForm">
+        <input 
+          type="password" 
+          id="n8nApiKey" 
+          placeholder="Enter n8n API Key" 
+          required
+        >
+        <input 
+          type="password" 
+          id="geminiApiKey" 
+          placeholder="Enter Gemini API Key" 
+          required
+        >
+        <button type="submit">Save API Keys</button>
+      </form>
+    </div>
   </div>
 
   <script>
