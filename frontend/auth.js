@@ -27,7 +27,10 @@ async function logout() {
     try{
         await fetch('http://localhost:8000/auth/logout',{
             method:'POST',
-            credentials:'include'
+            credentials:'include',
+            body:JSON.stringify({
+                "email":localStorage.getItem("userEmail")
+            })
         });
     } catch(error){
         console.error('Logout error: ',error);

@@ -17,7 +17,8 @@ from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
 import httpx
 from middleware_jwt import create_jwt_token,verify_jwt_token,JWT_EXPIRATION_HOURS
-from db.user_db import create_or_update_user
+from db.user_db import create_or_update_user,set_user_inactive
+
 load_dotenv()
 app = FastAPI()
 
@@ -128,7 +129,7 @@ async def auth_callback(request:Request):
         print("User Inserted")
     else:
         print("User Updated")
-        
+
     jwt_token = create_jwt_token(user_data)
     response = RedirectResponse(f"http://localhost:3000/dashboard.html")
     response.set_cookie(
@@ -159,7 +160,12 @@ async def validate_token(request:Request):
         raise HTTPException(status_code=401,detail=str(e))
 
 @app.post("/auth/logout")
-async def logout():
+async def logout(request:Request):
+    response_dict = await request.json()
+    inactive_response = await set_user_inactive(response_dict["email"])
+    if(inactive_response):
+        print("User logged out")
+    else: print("Unable to logout")
     response = {"message":"Logged out successfully"}
     response = JSONResponse(content=response)
     response.delete_cookie("auth_token")
