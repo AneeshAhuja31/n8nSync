@@ -36,6 +36,32 @@ get_all_exisiting_workflows_description = """
     - "I need to find a workflow but don't know the ID"
     """
 
+post_workflow_description = """
+    Post (import) an n8n workflow JSON into a specific n8n Project Workspace.
+
+    Use this tool when:
+    - User wants to create a new workflow from a JSON definition
+    - User provides a workflow JSON to be imported into n8n
+    - You have generated or modified a workflow and need to save it
+    - User asks to upload or apply a workflow to their n8n instance
+
+    IMPORTANT:
+    - Input must be a complete, valid string in format of the JSON object representing the workflow.
+    - NEVER use single quotes. Only use double quotes in the JSON body.
+    -  ABSOLUTELY DO NOT add the `active`: True/False key value pair in the input workflow_json dictionary.
+    - Ensure that all required fields (`name`, `nodes`, `connections`, `settings`) are present.
+
+    Input Parameters:
+    - workflow_json (str): Required. Complete n8n workflow JSON object to post, it must be a string in format of dictionary/json object.
+    
+    IMPORTANT: In the output
+    Example usage scenarios:
+    - "Create a workflow that sends a Slack message daily"
+    - "Import this workflow into my n8n project"
+    - "Post the following JSON as a new workflow"
+    """
+
+
 create_workflow_from_prompt_description = """
     Generate a complete n8n workflow JSON from a natural language description.
     

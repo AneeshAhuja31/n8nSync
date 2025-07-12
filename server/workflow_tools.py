@@ -1,7 +1,7 @@
 from langchain_core.tools import Tool
 import requests
 from typing import Dict, Any, List
-from tool_descriptions import fetch_exisiting_workflow_description, get_all_exisiting_workflows_description, create_workflow_from_prompt_description, explain_workflow_description, modify_workflow_description
+from tool_descriptions import fetch_exisiting_workflow_description, get_all_exisiting_workflows_description, post_workflow_description,create_workflow_from_prompt_description, explain_workflow_description, modify_workflow_description
 from prompt_templates import creation_prompt_template, explaination_prompt_template, modification_prompt_template
 from langchain_google_genai import ChatGoogleGenerativeAI
 from dotenv import load_dotenv
@@ -49,6 +49,55 @@ def _get_all_exisiting_workflows() -> Dict[str, Any]:
     except Exception as e:
         return {"success": False, "error": f"Request failed: {str(e)}"}
 
+def _post_workflow(workflow_json: str)->Dict[str,Any]:
+    try:
+        if isinstance(workflow_json, str):
+            try:
+                workflow_json = ast.literal_eval(workflow_json)
+            except (ValueError, SyntaxError) as e:
+                return {"success": False, "error": f"Invalid input format: {e}"} 
+            
+        else:
+            return {"success": False, "error": "Input must be a string in format of a dictionary"}
+        
+        if not workflow_json:
+            return {"success": False, "error": "Workflow_json is required"}
+        
+        response = requests.post(f"http://localhost:5678/api/v1/workflows",
+                headers={
+                    "accept": "application/json",
+                    "X-N8N-API-KEY": f"{n8n_api_key}"
+                },
+                json=workflow_json
+        )
+        response_json = response.json()
+        if response.status_code == 200:
+            workflow_name = response_json.get("name")
+            return {
+                "success":True,
+                "message": f"Workflow JSON: {workflow_name} , posted successfully!"
+            }
+        elif response.status_code == 400: #invalid workflow_json
+            if response_json["message"] == "request/body/active is read-only":
+                return {
+                    "success":False,
+                    "message":"Remove active set to true/false key value pair from the workflow json and retry",
+                    "status_code":response.status_code
+                }
+            wrong_syntax_message = response_json["message"]
+            return {
+                "success":False,
+                "message":f"Workflow JSON has errors: {wrong_syntax_message}",
+                "status_code":response.status_code
+            }
+        elif response.status_code == 401:
+            return {
+                "success":False,
+                "message":"Unauthorized access"
+            }
+    except Exception as e:
+        return {"success": False, "error": f"Post Request to post workflow failed: {str(e)}"}
+    
 def _create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
     try:
         full_prompt = creation_prompt_template.replace('[[USER_PROMPT]]', prompt)
@@ -168,6 +217,7 @@ def _modify_workflow(input_dict: str) -> Dict[str, Any]:
             "success": False,
             "error": f"Error modifying workflow: {str(e)}"
         }
+
     
 fetch_existing_workflow = Tool(
     name="fetch_existing_workflow",
@@ -179,6 +229,12 @@ get_all_existing_workflows = Tool(
     name="get_all_existing_workflows", 
     description=get_all_exisiting_workflows_description,
     func=lambda _:_get_all_exisiting_workflows()
+)
+
+post_workflow = Tool(
+    name="post_workflow",
+    description=post_workflow_description,
+    func=_post_workflow
 )
 
 create_workflow_from_prompt = Tool(

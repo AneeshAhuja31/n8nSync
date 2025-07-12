@@ -49,6 +49,7 @@ llm = ChatGoogleGenerativeAI(
 tools = [
     fetch_existing_workflow,
     get_all_existing_workflows,
+    post_workflow,
     create_workflow_from_prompt,
     explain_workflow,  
     modify_workflow
