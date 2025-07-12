@@ -84,7 +84,6 @@ Question: {{input}}
 Thought: {{agent_scratchpad}}
 """)
 
-# Keep existing templates unchanged
 creation_prompt_template = """
 NEVER EVER USE SINGLE QUOTES in your json output, ALWAYS USE DOUBLE QUOTES (")
 You are an expert in building automation workflows using n8n.
@@ -132,7 +131,31 @@ Generate ONLY the JSON workflow - no explanatory text, no markdown formatting, n
         }
     }
 
-[Rest of existing template guidelines...]
+* **IMPORTANT: Use `propertyValues` for Set nodes. Do NOT use `values`.**
+    Example:
+    "parameters": {
+        "propertyValues": {
+            "fieldName": "fieldValue"
+        },
+        "options": {}
+    }
+
+* **Credentials:**
+    When credentials are required, use the structure:
+    "credentials": {
+        "serviceName": {
+            "id": "YOUR_CREDENTIAL_ID",
+            "name": "YOUR_CREDENTIAL_NAME"
+        }
+    }
+
+* **Text interpolations (like Slack messages or HTTP request bodies):**
+    Use expressions like:
+    "text": "={{ $json.someValue }}"
+
+* **Avoid deprecated or legacy formats from older versions of n8n. Always use the latest compatible structure.**
+
+* **Ensure the workflow is self-contained and imports without error into n8n.**
 
 Now, generate ONLY the n8n workflow JSON based on the following user prompt:
 [[USER_PROMPT]]
