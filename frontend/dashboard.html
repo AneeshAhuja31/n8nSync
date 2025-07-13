@@ -86,7 +86,11 @@
           placeholder="Enter Gemini API Key" 
           required
         >
-        <button type="submit">Save API Keys</button>
+        <div class="loader" id="loader" style="display: none; text-align: center; margin-top: 10px;">
+          <div class="spinner" style="margin: 0 auto;"></div>
+          <p style="color: #ccc; font-size: 14px;">Validating API Keys...</p>
+        </div>
+        <button type="submit" id="saveBtn">Save API Keys</button>
       </form>
     </div>
   </div>

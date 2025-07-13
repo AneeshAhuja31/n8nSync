@@ -83,7 +83,10 @@ document.addEventListener('DOMContentLoaded',async()=>{
     if (apiKeyForm) {
         apiKeyForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+            const loader = document.getElementById("loader");
+            const saveBtn = document.getElementById("saveBtn");
+            loader.style.display = "block";
+            saveBtn.disabled = true;
             const instanceType = document.getElementById("n8nInstanceType").value;
             const n8nCloudUri = document.getElementById("n8nCloudUri").value.trim();
             const n8nApiKey = document.getElementById('n8nApiKey').value.trim();
@@ -113,6 +116,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
                 if (n8nValidationResponse.ok){
                     n8nValidationData = await n8nValidationResponse.json();
                     if(!n8nValidationData.success){
+                        loader.style.display = "none";
+                        saveBtn.disabled = false;
                         if(n8nValidationData.message === "unauthorized"){
                             alert("❌Invalid n8n API Key or n8n instance not active");
                             return;
@@ -140,6 +145,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
                 if (geminiValidationResponse.ok){
                     geminiValidationData = await geminiValidationResponse.json();
                     if(!geminiValidationData.success){
+                        loader.style.display = "none";
+                        saveBtn.disabled = false;
                         if(geminiValidationData.message === "Invalid or unauthorized API key"){
                             alert("❌Invalid or unauthorized API key");
                             return;
@@ -154,6 +161,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
                         }
                     }
                 }
+                loader.style.display = "none";
+                saveBtn.disabled = false;
                 saveApiKeys(instanceType, n8nCloudUri, n8nApiKey, geminiApiKey);
             }
         });
