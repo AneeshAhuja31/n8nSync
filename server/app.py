@@ -18,7 +18,8 @@ from langchain_core.runnables import RunnableConfig
 import httpx
 from middleware_jwt import create_jwt_token,verify_jwt_token,JWT_EXPIRATION_HOURS
 from db.user_db import create_or_update_user,set_user_inactive
-
+import requests
+from requests.exceptions import ConnectionError
 load_dotenv()
 app = FastAPI()
 
@@ -270,6 +271,40 @@ async def get_chat_history(session_id: str):
         session_id=session_id,
         messages=chat_sessions[session_id]
     )
+
+@app.post("/validate-n8n-api-key")
+async def validate_n8n_api_key(request:Request):
+    response_dict = await request.json()
+    n8nUrl = response_dict["n8nUrl"]
+    n8nApiKey = response_dict["n8nApiKey"]
+    try:
+        n8n_validation_response = requests.get(f"{n8nUrl}/api/v1/workflows",
+            headers={
+                "accept": "application/json",
+                "X-N8N-API-KEY": f"{n8nApiKey}"                         
+        })
+        if n8n_validation_response.status_code == 200:
+            return {"success":True}
+        elif n8n_validation_response.status_code == 401:
+            return {"success":False,"message":"unauthorized"}
+    except ConnectionError:
+        return {"success":False,"message":"Connection Issue"}
+
+@app.post("/validate-gemini-api-key")
+async def validate_gemini_api_key(request:Request):
+    response_dict = await request.json()
+    geminiApiKey = response_dict["geminiApiKey"]
+    try:
+        response = requests.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={geminiApiKey}")
+        if response.status_code == 200:
+            return {"success":True}
+        elif response.status_code == 403:
+            return {"success":False,"message":"Invalid or unauthorized API key"}
+        elif response.status_code == 429:
+            return {"success":False,"message":"Quota exceeded or rate limited"}
+    except Exception as e:
+        return {"success":False,"message":"Connection Issue"}
+        
 
 @app.delete("/chat/history/{session_id}")
 async def clear_chat_history(session_id: str):

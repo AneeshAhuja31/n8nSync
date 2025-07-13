@@ -39,6 +39,7 @@ async function logout() {
     localStorage.removeItem('userEmail');
     localStorage.removeItem('n8nApiKey');  
     localStorage.removeItem('geminiApiKey');
+    localStorage.removeItem('n8nInstanceType')
     window.location.href = 'http://localhost:3000/login.html';
 }
 
@@ -80,20 +81,79 @@ document.addEventListener('DOMContentLoaded',async()=>{
     }
 
     if (apiKeyForm) {
-        apiKeyForm.addEventListener('submit', function(e) {
+        apiKeyForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const instanceType = document.getElementById("n8nInstanceType").value;
             const n8nCloudUri = document.getElementById("n8nCloudUri").value.trim();
             const n8nApiKey = document.getElementById('n8nApiKey').value.trim();
             const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
-
+            let n8nURI = "";
             if (instanceType && n8nApiKey && geminiApiKey) {
                 if (instanceType === 'cloud' && !n8nCloudUri) {
                     alert('Please enter the n8n Cloud URI');
                     return;
                 }
+                if(instanceType ==="cloud"){
+                    n8nURI = n8nCloudUri;
+                }
+                else{
+                    n8nURI = "http://localhost:5678";
+                }
+                const n8nValidationResponse = await fetch("http://localhost:8000/validate-n8n-api-key", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify({
+                            "n8nUrl":n8nURI,
+                            "n8nApiKey":n8nApiKey
+                        })
+                    });
+                if (n8nValidationResponse.ok){
+                    n8nValidationData = await n8nValidationResponse.json();
+                    if(!n8nValidationData.success){
+                        if(n8nValidationData.message === "unauthorized"){
+                            alert("❌Invalid n8n API Key or n8n instance not active");
+                            return;
+                        }
+                        else if(n8nValidationData.message === "Connection Issue" && n8nURI === "http://localhost:5678"){
+                            alert("❌n8n Instance Offline, run n8n locally on terminal!");
+                            return;
+                        }
+                        else if(n8nValidationData.message === "Connection Issue" && n8nURI === n8nCloudUri){
+                            alert("❌Problem connecting with your n8n cloud, please try again later!");
+                            return;
+                        }
+                    }
+                }
+                const geminiValidationResponse = await fetch("http://localhost:8000/validate-gemini-api-key", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify({
+                            "geminiApiKey":geminiApiKey
+                        })
+                    });
                 
+                if (geminiValidationResponse.ok){
+                    geminiValidationData = await geminiValidationResponse.json();
+                    if(!geminiValidationData.success){
+                        if(geminiValidationData.message === "Invalid or unauthorized API key"){
+                            alert("❌Invalid or unauthorized API key");
+                            return;
+                        }
+                        else if(geminiValidationData.message === "Quota exceeded or rate limited"){
+                            alert("❌Gemini API Quota exceeded or rate limited");
+                            return;
+                        }
+                        else if(geminiValidationData.message === "Connection Issue"){
+                            alert("❌Gemini Connection Issue, please try again later!");
+                            return;
+                        }
+                    }
+                }
                 saveApiKeys(instanceType, n8nCloudUri, n8nApiKey, geminiApiKey);
             }
         });
@@ -144,4 +204,3 @@ function hideApiKeyOverlay() {
     overlay.style.display = 'none';
     container.classList.remove('blurred');
 }
-
