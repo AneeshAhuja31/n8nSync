@@ -61,6 +61,19 @@
         Please enter your API keys to use the chat interface.
       </p>
       <form class="api-key-form" id="apiKeyForm">
+        <select id="n8nInstanceType" required>
+          <option value="" disabled selected hidden >Select n8n Instance Type</option>
+          <option value="localhost">localhost:5678</option>
+          <option value="cloud">n8n Cloud</option>
+        </select>
+        
+        <input 
+          type="url" 
+          id="n8nCloudUri" 
+          placeholder="Enter n8n Cloud URI (https://<name>.app.n8n.cloud)" 
+          style="display: none;"
+        >
+        
         <input 
           type="password" 
           id="n8nApiKey" 

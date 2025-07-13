@@ -54,7 +54,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const storedEmail = localStorage.getItem('userEmail');
     const logoutBtn = document.getElementById('logoutBtn');
     const apiKeyForm = document.getElementById('apiKeyForm');
-
+    const instanceTypeSelect = document.getElementById("n8nInstanceType");
+    const cloudUriInput = document.getElementById("n8nCloudUri");
     if (storedName){
         document.getElementById('welcome').innerText = `Welcome ${storedName}.`;
     }
@@ -64,15 +65,36 @@ document.addEventListener('DOMContentLoaded',async()=>{
         logoutBtn.addEventListener('click', logout);
     }
 
+    if(instanceTypeSelect){
+        instanceTypeSelect.addEventListener("change",function(){
+            if (this.value === "cloud"){
+                cloudUriInput.style.display = "block";
+                cloudUriInput.required = true;
+            } 
+            else {
+                cloudUriInput.style.display = 'none';
+                cloudUriInput.required = false;
+                cloudUriInput.value = ''; 
+            }
+        });
+    }
+
     if (apiKeyForm) {
         apiKeyForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
+            const instanceType = document.getElementById("n8nInstanceType").value;
+            const n8nCloudUri = document.getElementById("n8nCloudUri").value.trim();
             const n8nApiKey = document.getElementById('n8nApiKey').value.trim();
             const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
-            
-            if (n8nApiKey && geminiApiKey) {
-                saveApiKeys(n8nApiKey, geminiApiKey);
+
+            if (instanceType && n8nApiKey && geminiApiKey) {
+                if (instanceType === 'cloud' && !n8nCloudUri) {
+                    alert('Please enter the n8n Cloud URI');
+                    return;
+                }
+                
+                saveApiKeys(instanceType, n8nCloudUri, n8nApiKey, geminiApiKey);
             }
         });
     }
@@ -84,12 +106,27 @@ document.addEventListener('DOMContentLoaded',async()=>{
 function checkApiKeys() {
     const n8nApiKey = localStorage.getItem('n8nApiKey');
     const geminiApiKey = localStorage.getItem('geminiApiKey');
+    const n8nInstanceType = localStorage.getItem('n8nInstanceType');
     
-    if (!n8nApiKey || !geminiApiKey) {
+    if (!n8nApiKey || !geminiApiKey || !n8nInstanceType) {
         showApiKeyOverlay();
         return false;
     }
     return true;
+}
+
+function saveApiKeys(instanceType, cloudUri, n8nApiKey, geminiApiKey) {
+    localStorage.setItem('n8nInstanceType', instanceType);
+    localStorage.setItem('n8nApiKey', n8nApiKey);
+    localStorage.setItem('geminiApiKey', geminiApiKey);
+    
+    if (instanceType === 'cloud') {
+        localStorage.setItem('n8nCloudUri', cloudUri);
+    } else {
+        localStorage.removeItem('n8nCloudUri');
+    }
+    
+    hideApiKeyOverlay();
 }
 
 function showApiKeyOverlay() {
@@ -107,22 +144,4 @@ function hideApiKeyOverlay() {
     overlay.style.display = 'none';
     container.classList.remove('blurred');
 }
-
-function saveApiKeys(n8nApiKey, geminiApiKey) {
-    localStorage.setItem('n8nApiKey', n8nApiKey);
-    localStorage.setItem('geminiApiKey', geminiApiKey);
-    hideApiKeyOverlay();
-}
-
-// Add event listener for API key form (add to the DOMContentLoaded event)
-document.getElementById('apiKeyForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const n8nApiKey = document.getElementById('n8nApiKey').value.trim();
-    const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
-    
-    if (n8nApiKey && geminiApiKey) {
-        saveApiKeys(n8nApiKey, geminiApiKey);
-    }
-});
 
