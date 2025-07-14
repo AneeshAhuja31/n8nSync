@@ -7,14 +7,12 @@ from asyncio import Queue
 import asyncio
 import os
 import json
-from typing import Dict, List, Any
 from dotenv import load_dotenv
 from workflow_tools import *
-from pydantic_models import ChatMessage, ChatHistoryResponse
+from pydantic_models import ChatMessage
 from prompt_templates import combined_react_prompt
 from langchain.agents import create_react_agent,AgentExecutor
 from langchain.agents.output_parsers import ReActSingleInputOutputParser
-from langchain.agents.format_scratchpad import format_log_to_str
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
 import httpx

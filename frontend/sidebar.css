@@ -1,3 +1,82 @@
+.sidebar {
+  width: 240px; /* Default open width */
+  min-width: 240px; /* Fixed width when open */
+  /* Complete Black for sidebar background */
+  background-color: #2b2b2b;
+  color: #E0E0E0;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(74, 123, 122, 0.2); /* Subtle Muted Teal border */
+  transition: width 0.3s ease-in-out, min-width 0.3s ease-in-out, padding 0.3s ease-in-out;
+  z-index: 10;
+  overflow: hidden;
+}
+
+/* Sidebar closed state (controlled by data-sidebar-open="false" on body) */
+body[data-sidebar-open="false"] .sidebar {
+  width: 0;
+  min-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-right: none;
+  transition: width 0.3s ease-in-out, min-width 0.3s ease-in-out, padding 0.3s ease-in-out, overflow 0s 0.3s;
+}
+
+/* Ensure content that needs to slide/fade has its own transition */
+.sidebar > * { /* Target immediate children of sidebar for content animation */
+    transition: opacity 0.2s ease-in 0.1s, transform 0.2s ease-in 0.1s;
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* When sidebar is closing, fade out and slightly shift content */
+body[data-sidebar-open="false"] .sidebar > * {
+    opacity: 0;
+    transform: translateX(-20px);
+    pointer-events: none;
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.logo {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #f4b400; /* Purplish Pink for the logo */
+  white-space: nowrap;
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.nav-links a {
+  color: #E0E0E0;
+  text-decoration: none;
+  font-size: 1rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-links a:hover {
+  background-color: #1A1A1A; /* Dark Grey on hover */
+  color:  #f46c5e; /* Muted Teal on hover */
+}
+.nav-links a.active {
+  background-color: #1A1A1A; /* Dark Grey for active link */
+  color: #f4b400; /* Purplish Pink for active link */
+}
+
 .chat-history-list {
     flex: 1;
     overflow-y: auto;
@@ -16,7 +95,7 @@
 }
 
 .chat-history-list::-webkit-scrollbar-thumb {
-    background-color: #4A7B7A;
+    background-color:  #f46c5e;
     border-radius: 3px;
     border: 1px solid #1A1A1A;
 }
