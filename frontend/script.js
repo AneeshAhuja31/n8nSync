@@ -184,9 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="chat-title" title="${chat.title}">
                         ${chat.title}
                     </div>
-                    <div class="chat-date">
-                        ${formatDate(chat.last_accessed)}
-                    </div>
+                    
                 </div>
                 <div class="chat-actions">
                     <button class="edit-chat-btn" title="Edit title" data-chat-id="${chat.id}">
