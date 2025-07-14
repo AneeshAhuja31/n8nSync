@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeDiv.id = 'welcome';
         welcomeDiv.innerHTML = `
             <div class="welcome-content">
-                <h3>Welcome ${localStorage.getItem("userName")}</h3>
+                <h3 style="margin-bottom: -2.0rem">Welcome ${localStorage.getItem("userName")}</h3>
                 <p>How can I assist you today?</p>
             </div>
         `;
@@ -575,11 +575,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return text;
     }
 
+
     async function streamResponse(message, agentMessageDiv) {
         let thoughtsContainer = null;
         let answerContainer = null;
         let fullAnswerContent = '';
-        
+        let streamingLoader = null;
+
+        streamingLoader = document.createElement('div');
+        streamingLoader.className = 'streaming-loader';
+        streamingLoader.innerHTML = `
+            <div class="streaming-dot"></div>
+        `;
+        agentMessageDiv.appendChild(streamingLoader);
+
         try {
             const response = await fetch('http://localhost:8000/agent/stream', {
                 method: 'POST',
@@ -616,6 +625,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 answerContainer = createAnswerContainer(agentMessageDiv);
                             }
                             
+                            // Remove loader only on final_answer_start
+                            if (data.type === 'final_answer_start' && streamingLoader) {
+                                streamingLoader.remove();
+                                streamingLoader = null;
+                            }
+                            
                             handleStreamData(data, thoughtsContainer, answerContainer);
                             
                             if (data.type === 'token') {
@@ -634,12 +649,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
         } catch (error) {
+            // Remove loader on error
+            if (streamingLoader) {
+                streamingLoader.remove();
+            }
+            
             if (!answerContainer) {
                 answerContainer = createAnswerContainer(agentMessageDiv);
             }
             answerContainer.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
         }
     }
+
     
     function handleStreamData(data, thoughtsContainer, answerContainer) {
         switch (data.type) {

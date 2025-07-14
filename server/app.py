@@ -13,6 +13,8 @@ from workflow_tools import *
 from pydantic_models import ChatMessage, ChatHistoryResponse
 from prompt_templates import combined_react_prompt
 from langchain.agents import create_react_agent,AgentExecutor
+from langchain.agents.output_parsers import ReActSingleInputOutputParser
+from langchain.agents.format_scratchpad import format_log_to_str
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
 import httpx
@@ -65,10 +67,13 @@ memory = ConversationBufferWindowMemory(
     output_key="output"
 )
 
+parser = ReActSingleInputOutputParser()
+
 agent = create_react_agent(
     llm=llm,
     tools=tools,
-    prompt=combined_react_prompt
+    prompt=combined_react_prompt,
+    output_parser=parser
 )
 
 agent_executor = AgentExecutor(
@@ -78,7 +83,8 @@ agent_executor = AgentExecutor(
     verbose=True,
     handle_parsing_errors=True,
     return_intermediate_steps=True,
-    early_stopping_method="force"
+    early_stopping_method="force",
+    max_iterations=6
 )
 
 @app.get("/")

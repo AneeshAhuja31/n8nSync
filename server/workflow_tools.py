@@ -20,7 +20,7 @@ def _fetch_exisiting_workflow(workflow_id: str) -> Dict[str, Any]:
             "X-N8N-API-KEY": f"{n8n_api_key}"
         })
         if response.status_code == 200:
-            return response.json()
+            return str(response.json())
         return {"success": False, "error": f"Error in retrieving workflow with id: {workflow_id}"}
     except Exception as e:
         return {"success": False, "error": f"Request failed: {str(e)}"}

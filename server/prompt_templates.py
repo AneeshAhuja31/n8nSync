@@ -67,6 +67,16 @@ Observation: the result of the action
 Thought: I now know the final answer
 Final Answer: the final answer to the original input question
 
+EXAMPLES:
+
+Question: Show me workflow cl213CXmmgMgKbUZ
+Thought: I need to fetch the existing workflow using the provided ID
+Action: fetch_existing_workflow
+Action Input: cl213CXmmgMbUZ
+Observation: [[the fetched workflow data]]
+Thought: I now know the final answer
+Final Answer: Here is the workflow data for cl213CXmmgMgKbUZ
+
 CRITICAL: You must follow this format exactly. Do not include any additional text, explanations, or content outside of this structure.
 
 Begin!
