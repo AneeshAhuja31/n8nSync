@@ -8,7 +8,7 @@ import asyncio
 import os
 import json
 from dotenv import load_dotenv
-from workflow_tools import *
+from workflow_tools import wrapper_fetch_existing_workflow,wrapper_get_all_existing_workflows,wrapper_post_worflow,create_workflow_from_prompt,explain_workflow,modify_workflow
 from pydantic_models import ChatMessage
 from prompt_templates import combined_react_prompt
 from langchain.agents import create_react_agent,AgentExecutor
@@ -37,27 +37,12 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
 
 SCOPES = "openid email profile"
 
-llm = ChatGoogleGenerativeAI(
-    api_key=GEMINI_API_KEY,
-    model="gemini-2.5-flash",
-    temperature=0.3
-)
-
-tools = [
-    fetch_existing_workflow,
-    get_all_existing_workflows,
-    post_workflow,
-    create_workflow_from_prompt,
-    explain_workflow,  
-    modify_workflow
-] 
 
 memory = ConversationBufferWindowMemory(
     memory_key="chat_history",
@@ -67,23 +52,30 @@ memory = ConversationBufferWindowMemory(
 
 parser = ReActSingleInputOutputParser()
 
-agent = create_react_agent(
-    llm=llm,
-    tools=tools,
-    prompt=combined_react_prompt,
-    output_parser=parser
-)
+async def create_agent_executor(gemini_api_key,tools):
+    llm = ChatGoogleGenerativeAI(
+        api_key=gemini_api_key,
+        model="gemini-2.5-flash",
+        temperature=0.3
+    )
+    agent = create_react_agent(
+        llm=llm,
+        tools=tools,
+        prompt=combined_react_prompt,
+        output_parser=parser
+    )
 
-agent_executor = AgentExecutor(
-    agent=agent,
-    tools=tools,
-    memory=memory,
-    verbose=True,
-    handle_parsing_errors=True,
-    return_intermediate_steps=True,
-    early_stopping_method="force",
-    max_iterations=6
-)
+    agent_executor = AgentExecutor(
+        agent=agent,
+        tools=tools,
+        memory=memory,
+        verbose=True,
+        handle_parsing_errors=True,
+        return_intermediate_steps=True,
+        early_stopping_method="force",
+        max_iterations=6
+    )
+    return agent_executor
 
 @app.get("/")
 async def root():
@@ -195,7 +187,8 @@ async def load_chat_into_memory(chat_id: str):
 async def stream_agent_response(chat_input: ChatMessage):
     chat_id = chat_input.chat_id
     user_message = chat_input.message
-
+    gemini_api_key = chat_input.gemini_api_key
+    n8n_api_key = chat_input.n8n_api_key
     await load_chat_into_memory(chat_id)
     await save_message(chat_id,"user",user_message)
     
@@ -207,6 +200,18 @@ async def stream_agent_response(chat_input: ChatMessage):
         agent_response = ""
         
         try:
+            fetch_existing_workflow = await wrapper_fetch_existing_workflow(n8n_api_key)
+            get_all_existing_workflows = await wrapper_get_all_existing_workflows(n8n_api_key)
+            post_workflow = await wrapper_post_worflow(n8n_api_key)
+            tools = [
+                fetch_existing_workflow,
+                get_all_existing_workflows,
+                post_workflow,
+                create_workflow_from_prompt,
+                explain_workflow,  
+                modify_workflow
+            ] 
+            agent_executor = await create_agent_executor(gemini_api_key,tools)
             agent_task = asyncio.create_task(
                 agent_executor.ainvoke(
                     {
@@ -253,11 +258,12 @@ async def stream_agent_response(chat_input: ChatMessage):
                     yield f"data: {json.dumps({'type': 'error', 'content': f'Agent error: {str(e)}'})}\n\n"
             
             await save_message(chat_id, "assistant", agent_response.strip())
-
+            user_n8n_api_key = ""
             
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'content': f'Stream error: {str(e)}'})}\n\n"
-    
+            user_n8n_api_key = ""
+
     return StreamingResponse(
         generate_response(),
         media_type="text/plain",

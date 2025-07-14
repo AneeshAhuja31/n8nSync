@@ -596,7 +596,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 credentials: 'include',
                 body: JSON.stringify({
                     message: message,
-                    chat_id: currentChatId
+                    chat_id: currentChatId,
+                    n8n_api_key : localStorage.getItem("n8nApiKey"),
+                    gemini_api_key : localStorage.getItem("geminiApiKey")
                 })
             });
             

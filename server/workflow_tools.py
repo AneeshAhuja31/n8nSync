@@ -1,6 +1,6 @@
 from langchain_core.tools import Tool
 import requests
-from typing import Dict, Any, List
+from typing import Dict, Any
 from tool_descriptions import fetch_exisiting_workflow_description, get_all_exisiting_workflows_description, post_workflow_description,create_workflow_from_prompt_description, explain_workflow_description, modify_workflow_description
 from prompt_templates import creation_prompt_template, explaination_prompt_template, modification_prompt_template
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -11,93 +11,111 @@ import ast
 load_dotenv()
 
 gemini_api_key_workflow_generation = os.getenv("GEMINI_API_KEY_WORKFLOW_GENERATION")
-n8n_api_key = os.getenv("N8N_API_KEY")
 
-def _fetch_exisiting_workflow(workflow_id: str) -> Dict[str, Any]:
-    try:
-        response = requests.get(f"http://localhost:5678/api/v1/workflows/{workflow_id}", headers={
-            "accept": "application/json",
-            "X-N8N-API-KEY": f"{n8n_api_key}"
-        })
-        if response.status_code == 200:
-            return str(response.json())
-        return {"success": False, "error": f"Error in retrieving workflow with id: {workflow_id}"}
-    except Exception as e:
-        return {"success": False, "error": f"Request failed: {str(e)}"}
+async def wrapper_fetch_existing_workflow(api_key: str) -> Tool:
+    def _fetch_existing_workflow(workflow_id: str) -> Dict[str, Any]:
+        try:
+            response = requests.get(f"http://localhost:5678/api/v1/workflows/{workflow_id}", headers={
+                "accept": "application/json",
+                "X-N8N-API-KEY": api_key
+            })
+            if response.status_code == 200:
+                return str(response.json())
+            return {"success": False, "error": f"Error in retrieving workflow with id: {workflow_id}"}
+        except Exception as e:
+            return {"success": False, "error": f"Request failed: {str(e)}"}
 
-def _get_all_exisiting_workflows() -> Dict[str, Any]:
-    try:
-        response = requests.get(f"http://localhost:5678/api/v1/workflows", headers={
-            "accept": "application/json",
-            "X-N8N-API-KEY": f"{n8n_api_key}"
-        })
-        if response.status_code == 200:
-            response_data = response.json()
-            complete_workflow_list = response_data['data']
-            if len(complete_workflow_list) == 0:
-                return {"success": True, "workflow_list": []}
-            workflow_name_w_id_list = [
-                {"name": item["name"], "id": item["id"], "active": item["active"]}
-                for item in complete_workflow_list
-            ]
-            return {
-                "success": True,
-                "workflow_list": workflow_name_w_id_list
-            }
-        else: 
-            return {"success": False, "error": "Error in retrieving existing workflows", "status_code": response.status_code}
-    except Exception as e:
-        return {"success": False, "error": f"Request failed: {str(e)}"}
+    return Tool(
+        name="fetch_existing_workflow",
+        description=fetch_exisiting_workflow_description,
+        func=_fetch_existing_workflow
+    )
 
-def _post_workflow(workflow_json: str)->Dict[str,Any]:
-    try:
-        if isinstance(workflow_json, str):
-            try:
-                workflow_json = ast.literal_eval(workflow_json)
-            except (ValueError, SyntaxError) as e:
-                return {"success": False, "error": f"Invalid input format: {e}"} 
+async def wrapper_get_all_existing_workflows(api_key:str) ->Tool:
+    def _get_all_exisiting_workflows() -> Dict[str, Any]:
+        try:
+            response = requests.get(f"http://localhost:5678/api/v1/workflows", headers={
+                "accept": "application/json",
+                "X-N8N-API-KEY": f"{api_key}"
+            })
+            if response.status_code == 200:
+                response_data = response.json()
+                complete_workflow_list = response_data['data']
+                if len(complete_workflow_list) == 0:
+                    return {"success": True, "workflow_list": []}
+                workflow_name_w_id_list = [
+                    {"name": item["name"], "id": item["id"], "active": item["active"]}
+                    for item in complete_workflow_list
+                ]
+                return {
+                    "success": True,
+                    "workflow_list": workflow_name_w_id_list
+                }
+            else: 
+                return {"success": False, "error": "Error in retrieving existing workflows", "status_code": response.status_code}
+        except Exception as e:
+            return {"success": False, "error": f"Request failed: {str(e)}"}
+    return Tool(
+        name="get_all_exisiting_workflows",
+        description=get_all_exisiting_workflows_description,
+        func=lambda _: _get_all_exisiting_workflows()
+    )
+async def wrapper_post_worflow(api_key:str) -> Tool:
+    def _post_workflow(workflow_json: str)->Dict[str,Any]:
+        try:
+            if isinstance(workflow_json, str):
+                try:
+                    workflow_json = ast.literal_eval(workflow_json)
+                except (ValueError, SyntaxError) as e:
+                    return {"success": False, "error": f"Invalid input format: {e}"} 
+                
+            else:
+                return {"success": False, "error": "Input must be a string in format of a dictionary"}
             
-        else:
-            return {"success": False, "error": "Input must be a string in format of a dictionary"}
-        
-        if not workflow_json:
-            return {"success": False, "error": "Workflow_json is required"}
-        
-        response = requests.post(f"http://localhost:5678/api/v1/workflows",
-                headers={
-                    "accept": "application/json",
-                    "X-N8N-API-KEY": f"{n8n_api_key}"
-                },
-                json=workflow_json
-        )
-        response_json = response.json()
-        if response.status_code == 200:
-            workflow_name = response_json.get("name")
-            return {
-                "success":True,
-                "message": f"Workflow JSON: {workflow_name} , posted successfully!"
-            }
-        elif response.status_code == 400: #invalid workflow_json
-            if response_json["message"] == "request/body/active is read-only":
+            if not workflow_json:
+                return {"success": False, "error": "Workflow_json is required"}
+            
+            response = requests.post(f"http://localhost:5678/api/v1/workflows",
+                    headers={
+                        "accept": "application/json",
+                        "X-N8N-API-KEY": f"{api_key}"
+                    },
+                    json=workflow_json
+            )
+            response_json = response.json()
+            if response.status_code == 200:
+                workflow_name = response_json.get("name")
+                return {
+                    "success":True,
+                    "message": f"Workflow JSON: {workflow_name} , posted successfully!"
+                }
+            elif response.status_code == 400: #invalid workflow_json
+                if response_json["message"] == "request/body/active is read-only":
+                    return {
+                        "success":False,
+                        "message":"Remove active set to true/false key value pair from the workflow json and retry",
+                        "status_code":response.status_code
+                    }
+                wrong_syntax_message = response_json["message"]
                 return {
                     "success":False,
-                    "message":"Remove active set to true/false key value pair from the workflow json and retry",
+                    "message":f"Workflow JSON has errors: {wrong_syntax_message}",
                     "status_code":response.status_code
                 }
-            wrong_syntax_message = response_json["message"]
-            return {
-                "success":False,
-                "message":f"Workflow JSON has errors: {wrong_syntax_message}",
-                "status_code":response.status_code
-            }
-        elif response.status_code == 401:
-            return {
-                "success":False,
-                "message":"Unauthorized access"
-            }
-    except Exception as e:
-        return {"success": False, "error": f"Post Request to post workflow failed: {str(e)}"}
-    
+            elif response.status_code == 401:
+                return {
+                    "success":False,
+                    "message":"Unauthorized access"
+                }
+        except Exception as e:
+            return {"success": False, "error": f"Post Request to post workflow failed: {str(e)}"}
+    return Tool(
+        name="post_workflow",
+        description=post_workflow_description,
+        func=_post_workflow
+    )
+
+        
 def _create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
     try:
         full_prompt = creation_prompt_template.replace('[[USER_PROMPT]]', prompt)
@@ -217,25 +235,6 @@ def _modify_workflow(input_dict: str) -> Dict[str, Any]:
             "success": False,
             "error": f"Error modifying workflow: {str(e)}"
         }
-
-    
-fetch_existing_workflow = Tool(
-    name="fetch_existing_workflow",
-    description=fetch_exisiting_workflow_description,
-    func=_fetch_exisiting_workflow
-)
-
-get_all_existing_workflows = Tool(
-    name="get_all_existing_workflows", 
-    description=get_all_exisiting_workflows_description,
-    func=lambda _:_get_all_exisiting_workflows()
-)
-
-post_workflow = Tool(
-    name="post_workflow",
-    description=post_workflow_description,
-    func=_post_workflow
-)
 
 create_workflow_from_prompt = Tool(
     name="create_workflow_from_prompt",
