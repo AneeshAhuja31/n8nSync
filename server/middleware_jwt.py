@@ -1,7 +1,8 @@
 import jwt
 import os
 from datetime import datetime,timedelta
-import time
+from fastapi.requests import Request
+from fastapi.exceptions import HTTPException
 from dotenv import load_dotenv
 import secrets
 load_dotenv()
@@ -28,3 +29,14 @@ def verify_jwt_token(token:str) -> dict:
     except jwt.InvalidTokenError:
         raise Exception("Invalid token")
 
+async def get_user_from_token(request: Request):
+    token = request.cookies.get("auth_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="No token provided")
+    
+    payload = verify_jwt_token(token)
+    return {
+        "name": payload.get("name"),
+        "email": payload.get("email")
+    }
+    

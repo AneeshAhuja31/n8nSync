@@ -16,10 +16,16 @@ from langchain.agents import create_react_agent,AgentExecutor
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
 import httpx
-from middleware_jwt import create_jwt_token,verify_jwt_token,JWT_EXPIRATION_HOURS
+from middleware_jwt import create_jwt_token,verify_jwt_token,get_user_from_token,JWT_EXPIRATION_HOURS
 from db.user_db import create_or_update_user,set_user_inactive
 import requests
 from requests.exceptions import ConnectionError
+from db.chat_and_message_db import (
+    create_new_chat, get_user_chats, get_most_recent_chat,
+    update_chat_access, save_message, get_chat_messages,
+    delete_chat, update_chat_title
+)
+
 load_dotenv()
 app = FastAPI()
 
@@ -173,20 +179,24 @@ async def logout(request:Request):
     response.delete_cookie("auth_token")
     return response
 
+async def load_chat_into_memory(chat_id: str):
+    memory.clear()  
+    
+    messages = await get_chat_messages(chat_id)
+    
+    for message in messages:
+        if message["role"] == "user":
+            memory.chat_memory.add_user_message(message["content"])
+        elif message["role"] == "assistant":
+            memory.chat_memory.add_ai_message(message["content"])
+
 @app.post("/agent/stream")
 async def stream_agent_response(chat_input: ChatMessage):
-    session_id = chat_input.session_id
+    chat_id = chat_input.chat_id
     user_message = chat_input.message
 
-    if session_id not in chat_sessions:
-        chat_sessions[session_id] = []
-    
-    # Add user message to chat history
-    chat_sessions[session_id].append({
-        "role": "user",
-        "content": user_message,
-        "timestamp": asyncio.get_event_loop().time()
-    })
+    await load_chat_into_memory(chat_id)
+    await save_message(chat_id,"user",user_message)
     
     queue = Queue()
     cb_handler = CustomCallBackHandler(queue)
@@ -241,12 +251,8 @@ async def stream_agent_response(chat_input: ChatMessage):
                 except Exception as e:
                     yield f"data: {json.dumps({'type': 'error', 'content': f'Agent error: {str(e)}'})}\n\n"
             
-            # Save to chat history
-            chat_sessions[session_id].append({
-                "role": "assistant", 
-                "content": agent_response.strip() if agent_response else "",
-                "timestamp": asyncio.get_event_loop().time()
-            })
+            await save_message(chat_id, "assistant", agent_response.strip())
+
             
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'content': f'Stream error: {str(e)}'})}\n\n"
@@ -304,15 +310,55 @@ async def validate_gemini_api_key(request:Request):
             return {"success":False,"message":"Quota exceeded or rate limited"}
     except Exception as e:
         return {"success":False,"message":"Connection Issue"}
-        
 
-@app.delete("/chat/history/{session_id}")
-async def clear_chat_history(session_id: str):
-    if session_id in chat_sessions:
-        del chat_sessions[session_id]
-    memory.clear()
-    return {"message": f"Chat history cleared for session {session_id}"}
+@app.post("/chat/new")
+async def create_chat(request: Request):
+    user_data = await get_user_from_token(request)
+    title = "New Chat"
+    
+    new_chat_response = await create_new_chat(user_data["email"], title)
+    if new_chat_response["success"]:
+        return {"chat_id": new_chat_response["chat_id"], "title": title}
+    raise HTTPException(status_code=500,detail="Internal Server Error")
 
-@app.get("/chat/sessions")
-async def get_all_sessions():
-    return {"sessions": list(chat_sessions.keys())}
+@app.get("/chat/list")
+async def list_chats(request: Request):
+    user_data = await get_user_from_token(request)
+    chats = await get_user_chats(user_data["email"])
+    return {"chats": chats}
+
+@app.get("/chat/recent")
+async def get_recent_chat(request: Request):
+    user_data = await get_user_from_token(request)
+    chat_id = await get_most_recent_chat(user_data["email"])
+    
+    if not chat_id:
+        # Fix: Use the correct function with proper parameters
+        new_chat_response = await create_new_chat(user_data["email"], "New Chat")
+        if new_chat_response["success"]:
+            chat_id = new_chat_response["chat_id"]
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create new chat")
+    
+    return {"chat_id": chat_id}
+
+@app.get("/chat/{chat_id}/messages")
+async def get_chat_history_from_db(chat_id: str):
+    messages = await get_chat_messages(chat_id)
+    
+    await update_chat_access(chat_id)
+    
+    return {"messages": messages}
+
+@app.put("/chat/{chat_id}/title")
+async def update_chat_title_endpoint(chat_id: str, request: Request):
+    body = await request.json()
+    title = body["title"]
+    await update_chat_title(chat_id, title)
+    return {"success": True}
+
+@app.delete("/chat/{chat_id}")
+async def delete_chat_endpoint(chat_id: str):
+    await delete_chat(chat_id)
+    return {"success": True}
+

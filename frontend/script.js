@@ -1,37 +1,472 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     const chatMessages = document.querySelector('.chat-messages');
     const chatForm = document.querySelector('.chat-input');
     const chatInput = document.querySelector('.chat-input input');
+    const newChatBtn = document.querySelector('.nav-links a[href="#"]');
+    const historyBtn = document.querySelector('.nav-links a[href="#"]:nth-child(2)');
     
-    let currentSessionId = 'default';
+    let currentChatId = null;
+    let isLoading = false;
+    let chatHistory = [];
     
-    // Handle form submission
-    chatForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!checkApiKeysBeforeChat()) {
+    // Initialize chat management
+    initializeChatManagement();
+    
+    async function initializeChatManagement() {
+        try {
+            // Load most recent chat on dashboard load
+            await loadMostRecentChat();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Load chat history for sidebar
+            await loadChatHistory();
+            
+        } catch (error) {
+            console.error('Failed to initialize chat management:', error);
+            // Fallback: create new chat
+            await createNewChat();
+        }
+    }
+    
+    function setupEventListeners() {
+        // New chat button
+        newChatBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await createNewChat();
+        });
+        
+        // Replace history button with chat list
+        setupChatHistoryInterface();
+        
+        // Chat form submission
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!checkApiKeysBeforeChat()) {
+                return;
+            }
+            
+            const message = chatInput.value.trim();
+            if (!message || isLoading) return;
+            
+            await sendMessage(message);
+        });
+    }
+    
+    function setupChatHistoryInterface() {
+        // Replace history button with chat list container
+        const historyContainer = document.createElement('div');
+        historyContainer.className = 'chat-history-container';
+        historyContainer.innerHTML = `
+            <div class="chat-history-header">
+                <h3>Chat History</h3>
+                <button class="refresh-chats-btn" title="Refresh">
+                    <i class="fas fa-refresh"></i>
+                </button>
+            </div>
+            <div class="chat-history-list" id="chatHistoryList">
+                <div class="chat-history-loading">
+                    <div class="loader-spinner"></div>
+                    <p>Loading chats...</p>
+                </div>
+            </div>
+        `;
+        
+        // Replace history button with new container
+        historyBtn.parentNode.replaceChild(historyContainer, historyBtn);
+        
+        // Add refresh functionality
+        const refreshBtn = historyContainer.querySelector('.refresh-chats-btn');
+        refreshBtn.addEventListener('click', async () => {
+            await loadChatHistory();
+        });
+    }
+    
+    async function loadMostRecentChat() {
+        try {
+            showLoader('Loading recent chat...');
+            
+            const response = await fetch('http://localhost:8000/chat/recent', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to load recent chat');
+            }
+            
+            const data = await response.json();
+            currentChatId = data.chat_id;
+            
+            // Load messages for this chat
+            await loadChatMessages(currentChatId);
+            
+        } catch (error) {
+            console.error('Error loading recent chat:', error);
+            hideLoader();
+            throw error;
+        }
+    }
+    
+    async function createNewChat() {
+        try {
+            showLoader('Creating new chat...');
+            
+            const response = await fetch('http://localhost:8000/chat/new', {
+                method: 'POST',
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to create new chat');
+            }
+            
+            const data = await response.json();
+            currentChatId = data.chat_id;
+            
+            // Clear chat messages
+            clearChatMessages();
+            
+            // Refresh chat history
+            await loadChatHistory();
+            
+            // Show welcome message
+            showWelcomeMessage();
+            
+            hideLoader();
+            
+        } catch (error) {
+            console.error('Error creating new chat:', error);
+            hideLoader();
+            alert('Failed to create new chat. Please try again.');
+        }
+    }
+    
+    async function loadChatHistory() {
+        try {
+            const response = await fetch('http://localhost:8000/chat/list', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to load chat history');
+            }
+            
+            const data = await response.json();
+            chatHistory = data.chats;
+            
+            renderChatHistory();
+            
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+            renderChatHistoryError();
+        }
+    }
+    
+    function renderChatHistory() {
+        const chatHistoryList = document.getElementById('chatHistoryList');
+        
+        if (chatHistory.length === 0) {
+            chatHistoryList.innerHTML = `
+                <div class="no-chats">
+                    <p>No chat history yet</p>
+                </div>
+            `;
             return;
         }
-        const message = chatInput.value.trim();
-        if (!message) return;
+        
+        chatHistoryList.innerHTML = chatHistory.map(chat => `
+            <div class="chat-history-item ${chat.id === currentChatId ? 'active' : ''}" 
+                 data-chat-id="${chat.id}">
+                <div class="chat-info">
+                    <div class="chat-title" title="${chat.title}">
+                        ${chat.title}
+                    </div>
+                    <div class="chat-date">
+                        ${formatDate(chat.last_accessed)}
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="edit-chat-btn" title="Edit title" data-chat-id="${chat.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-chat-btn" title="Delete chat" data-chat-id="${chat.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+        // Add event listeners to chat items
+        addChatHistoryEventListeners();
+    }
+    
+    function addChatHistoryEventListeners() {
+        const chatItems = document.querySelectorAll('.chat-history-item');
+        const editBtns = document.querySelectorAll('.edit-chat-btn');
+        const deleteBtns = document.querySelectorAll('.delete-chat-btn');
+        
+        // Chat item click to switch chats
+        chatItems.forEach(item => {
+            item.addEventListener('click', async (e) => {
+                // Don't switch chat if clicking on action buttons
+                if (e.target.closest('.chat-actions')) return;
+                
+                const chatId = item.dataset.chatId;
+                if (chatId !== currentChatId) {
+                    await switchToChat(chatId);
+                }
+            });
+        });
+        
+        // Edit chat title
+        editBtns.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const chatId = btn.dataset.chatId;
+                await editChatTitle(chatId);
+            });
+        });
+        
+        // Delete chat
+        deleteBtns.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const chatId = btn.dataset.chatId;
+                await deleteChatConfirm(chatId);
+            });
+        });
+    }
+    
+    async function switchToChat(chatId) {
+        if (isLoading) return;
+        
+        try {
+            showLoader('Loading chat...');
+            
+            currentChatId = chatId;
+            
+            // Update active chat in history
+            updateActiveChatInHistory(chatId);
+            
+            // Load messages for this chat
+            await loadChatMessages(chatId);
+            
+        } catch (error) {
+            console.error('Error switching to chat:', error);
+            hideLoader();
+            alert('Failed to load chat. Please try again.');
+        }
+    }
+    
+    async function loadChatMessages(chatId) {
+        try {
+            const response = await fetch(`http://localhost:8000/chat/${chatId}/messages`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to load chat messages');
+            }
+            
+            const data = await response.json();
+            
+            // Clear existing messages
+            clearChatMessages();
+            
+            // Render messages
+            if (data.messages.length === 0) {
+                showWelcomeMessage();
+            } else {
+                data.messages.forEach(message => {
+                    if (message.role === 'assistant') {
+                        // For AI messages, render with markdown to handle JSON blocks
+                        const messageDiv = addMessage('', message.role, false);
+                        const renderedContent = renderMarkdown(message.content);
+                        messageDiv.innerHTML = renderedContent;
+                    } else {
+                        // For user messages, use plain text
+                        addMessage(message.content, message.role, false);
+                    }
+                });
+            }
+            
+            hideLoader();
+            
+        } catch (error) {
+            console.error('Error loading chat messages:', error);
+            hideLoader();
+            throw error;
+        }
+    }
+    
+    async function sendMessage(message) {
+        if (!currentChatId) {
+            await createNewChat();
+        }
         
         // Add user message to UI
         addMessage(message, 'user');
         chatInput.value = '';
         
-        // Create agent response container (initially empty)
+        // Create agent response container
         const agentMessageDiv = addMessage('', 'agent');
         
         // Start SSE stream
         await streamResponse(message, agentMessageDiv);
-    });
+        
+        // Refresh chat history to update last accessed time
+        await loadChatHistory();
+    }
     
-    function addMessage(content, role) {
+    async function editChatTitle(chatId) {
+        const chat = chatHistory.find(c => c.id === chatId);
+        if (!chat) return;
+        
+        const newTitle = prompt('Enter new chat title:', chat.title);
+        if (newTitle && newTitle.trim() !== chat.title) {
+            try {
+                const response = await fetch(`http://localhost:8000/chat/${chatId}/title`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ title: newTitle.trim() })
+                });
+                
+                if (response.ok) {
+                    await loadChatHistory();
+                } else {
+                    alert('Failed to update chat title');
+                }
+            } catch (error) {
+                console.error('Error updating chat title:', error);
+                alert('Failed to update chat title');
+            }
+        }
+    }
+    
+    async function deleteChatConfirm(chatId) {
+        const chat = chatHistory.find(c => c.id === chatId);
+        if (!chat) return;
+        
+        try {
+            const response = await fetch(`http://localhost:8000/chat/${chatId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                // If deleting current chat, switch to most recent or create new
+                if (chatId === currentChatId) {
+                    await loadMostRecentChat();
+                }
+                
+                await loadChatHistory();
+            } else {
+                alert('Failed to delete chat');
+            }
+        } catch (error) {
+            console.error('Error deleting chat:', error);
+            alert('Failed to delete chat');
+        }
+        
+    }
+    
+    function updateActiveChatInHistory(chatId) {
+        const chatItems = document.querySelectorAll('.chat-history-item');
+        chatItems.forEach(item => {
+            if (item.dataset.chatId === chatId) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+    
+    function clearChatMessages() {
+        chatMessages.innerHTML = '';
+    }
+    
+    function showWelcomeMessage() {
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.className = 'message agent';
+        welcomeDiv.id = 'welcome';
+        welcomeDiv.innerHTML = `
+            <div class="welcome-content">
+                <h3>Welcome ${localStorage.getItem("userName")}</h3>
+                <p>How can I assist you today?</p>
+            </div>
+        `;
+        chatMessages.appendChild(welcomeDiv);
+    }
+    
+    function showLoader(message = 'Loading...') {
+        isLoading = true;
+        
+        // Show loader in chat area
+        const loaderDiv = document.createElement('div');
+        loaderDiv.className = 'chat-loader';
+        loaderDiv.id = 'chatLoader';
+        loaderDiv.innerHTML = `
+            <div class="spinner"></div>
+            <p class="loader-text">${message}</p>
+        `;
+        
+        chatMessages.appendChild(loaderDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    
+    function hideLoader() {
+        isLoading = false;
+        const loader = document.getElementById('chatLoader');
+        if (loader) {
+            loader.remove();
+        }
+    }
+    
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diff = now - date;
+        
+        const minutes = Math.floor(diff / (1000 * 60));
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        if (days < 7) return `${days}d ago`;
+        
+        return date.toLocaleDateString();
+    }
+    
+    function renderChatHistoryError() {
+        const chatHistoryList = document.getElementById('chatHistoryList');
+        chatHistoryList.innerHTML = `
+            <div class="chat-history-error">
+                <p>Failed to load chat history</p>
+                <button class="retry-btn" onclick="loadChatHistory()">Retry</button>
+            </div>
+        `;
+    }
+    
+    function addMessage(content, role, shouldScroll = true) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${role}`;
         if (content) messageDiv.textContent = content;
         chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        if (shouldScroll) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
         return messageDiv;
     }
     
@@ -59,15 +494,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function formatJsonInContent(content) {
-        // Look for both ```json and json``` patterns
         const jsonRegex = /```json\s*([\s\S]*?)\s*```|json```\s*([\s\S]*?)\s*```/g;
         
         return content.replace(jsonRegex, (match, jsonContent1, jsonContent2) => {
-            // Use whichever capture group matched
             const trimmedJson = (jsonContent1 || jsonContent2).trim();
             
             try {
-                // Try to parse and format the JSON
                 const parsed = JSON.parse(trimmedJson);
                 const formattedJson = JSON.stringify(parsed, null, 2);
                 
@@ -83,7 +515,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>`;
             } catch (e) {
-                // If JSON parsing fails, display as plain text
                 return `<div class="code-template-container">
                     <div class="code-template-header">
                         <span class="code-template-title">Code Block</span>
@@ -99,49 +530,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Enhanced function to detect any JSON-like content in the response
-    function detectAndFormatJson(content) {
-        // First try the markdown code block detection
-        let processedContent = formatJsonInContent(content);
-        
-        // If no markdown code blocks found, try to detect standalone JSON objects
-        if (processedContent === content) {
-            // Look for JSON object patterns (starting with { and ending with })
-            const jsonObjectRegex = /(\{[\s\S]*?\})/g;
-            
-            processedContent = content.replace(jsonObjectRegex, (match, jsonCandidate) => {
-                // Only process if it looks like a substantial JSON object (more than just {})
-                if (jsonCandidate.length > 10) {
-                    try {
-                        const parsed = JSON.parse(jsonCandidate);
-                        // Check if it's likely an n8n workflow (has nodes, connections, etc.)
-                        if (parsed.nodes && parsed.connections) {
-                            const formattedJson = JSON.stringify(parsed, null, 2);
-                            
-                            return `<div class="code-template-container">
-                                <div class="code-template-header">
-                                    <span class="code-template-title">n8n Workflow JSON</span>
-                                    <button class="copy-code-btn" onclick="copyToClipboard(this)" data-code="${btoa(formattedJson)}">
-                                        <i class="fas fa-copy"></i> Copy JSON
-                                    </button>
-                                </div>
-                                <div class="code-template-content">
-                                    <pre><code class="json-code">${escapeHtml(formattedJson)}</code></pre>
-                                </div>
-                            </div>`;
-                        }
-                    } catch (e) {
-                        // Not valid JSON, return original
-                    }
-                }
-                return match;
-            });
-        }
-        
-        return processedContent;
-    }
-
-    // Helper function to escape HTML
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -149,11 +537,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function renderMarkdown(text) {
-        // First, preserve JSON code blocks by temporarily replacing them
         const jsonBlocks = [];
         let jsonIndex = 0;
         
-        // Extract and store JSON blocks
         text = text.replace(/```json\s*([\s\S]*?)\s*```|json```\s*([\s\S]*?)\s*```/g, (match) => {
             const placeholder = `__JSON_BLOCK_${jsonIndex}__`;
             jsonBlocks[jsonIndex] = match;
@@ -161,38 +547,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return placeholder;
         });
         
-        // Apply markdown transformations
         text = text
-            // Headers
             .replace(/^### (.*$)/gm, '<h3>$1</h3>')
             .replace(/^## (.*$)/gm, '<h2>$1</h2>')
             .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-            
-            // Bold and italic
             .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            
-            // Code (inline)
             .replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>')
-            
-            // Links
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-            
-            // Lists (simple implementation)
             .replace(/^[\s]*[-*+][\s]+(.*)$/gm, '<li>$1</li>')
             .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-            
-            // Line breaks
             .replace(/\n\n/g, '</p><p>')
             .replace(/\n/g, '<br>');
         
-        // Wrap in paragraphs if not already wrapped
         if (!text.startsWith('<h') && !text.startsWith('<ul') && !text.startsWith('<ol')) {
             text = '<p>' + text + '</p>';
         }
         
-        // Restore JSON blocks with proper formatting
         jsonBlocks.forEach((block, index) => {
             const placeholder = `__JSON_BLOCK_${index}__`;
             const formattedBlock = formatJsonInContent(block);
@@ -202,7 +574,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return text;
     }
 
-    // Update the streamResponse function to use markdown rendering
     async function streamResponse(message, agentMessageDiv) {
         let thoughtsContainer = null;
         let answerContainer = null;
@@ -214,9 +585,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     message: message,
-                    session_id: currentSessionId
+                    chat_id: currentChatId
                 })
             });
             
@@ -235,7 +607,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const data = JSON.parse(line.slice(6));
                             
-                            // Create containers only when needed
                             if ((data.type === 'thought' || data.type === 'observation' || data.type === 'error') && !thoughtsContainer) {
                                 thoughtsContainer = createThoughtsContainer(agentMessageDiv);
                             }
@@ -246,7 +617,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             handleStreamData(data, thoughtsContainer, answerContainer);
                             
-                            // Collect full answer content for final processing
                             if (data.type === 'token') {
                                 fullAnswerContent += data.content;
                             }
@@ -257,7 +627,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // Process the final answer with markdown rendering and JSON formatting
             if (answerContainer && fullAnswerContent) {
                 const renderedContent = renderMarkdown(fullAnswerContent);
                 answerContainer.innerHTML = renderedContent;
@@ -285,8 +654,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'token':
                 if (answerContainer) {
-                    // For streaming, we'll just accumulate the text
-                    // The final processing will handle JSON formatting
                     const currentContent = answerContainer.textContent || '';
                     answerContainer.textContent = currentContent + data.content;
                 }
@@ -298,7 +665,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'final_answer_start':
                 if (answerContainer) {
-                    // Clear answer container and prepare for streaming
                     answerContainer.innerHTML = '';
                 }
                 break;
@@ -313,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(thoughtDiv);
     }
     
-    // Global function for toggling thoughts
+    // Global functions
     window.toggleThoughts = function(header) {
         const thoughtsContainer = header.parentElement;
         const content = thoughtsContainer.querySelector('.thoughts-content');
@@ -332,12 +698,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     window.copyToClipboard = async function(button) {
         const encodedCode = button.getAttribute('data-code');
-        const code = atob(encodedCode); // Decode the base64 encoded JSON
+        const code = atob(encodedCode);
         
         try {
             await navigator.clipboard.writeText(code);
             
-            // Visual feedback
             const originalHTML = button.innerHTML;
             button.innerHTML = '<i class="fas fa-check"></i> Copied!';
             button.classList.add('copied');
@@ -350,7 +715,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error('Failed to copy text: ', err);
             
-            // Fallback for older browsers
             const textArea = document.createElement('textarea');
             textArea.value = code;
             document.body.appendChild(textArea);
@@ -358,7 +722,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.execCommand('copy');
             document.body.removeChild(textArea);
             
-            // Visual feedback
             const originalHTML = button.innerHTML;
             button.innerHTML = '<i class="fas fa-check"></i> Copied!';
             button.classList.add('copied');
@@ -371,13 +734,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function checkApiKeysBeforeChat() {
-    const n8nApiKey = localStorage.getItem('n8nApiKey');
-    const geminiApiKey = localStorage.getItem('geminiApiKey');
-    
-    if (!n8nApiKey || !geminiApiKey) {
-        showApiKeyOverlay();
-        return false;
+        const n8nApiKey = localStorage.getItem('n8nApiKey');
+        const geminiApiKey = localStorage.getItem('geminiApiKey');
+        
+        if (!n8nApiKey || !geminiApiKey) {
+            showApiKeyOverlay();
+            return false;
+        }
+        return true;
     }
-    return true;
-}
+    
+    // Make loadChatHistory available globally for retry button
+    window.loadChatHistory = loadChatHistory;
 });
