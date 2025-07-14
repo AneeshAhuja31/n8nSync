@@ -125,7 +125,7 @@ body[data-sidebar-open="false"] .sidebar > * {
   flex-direction: column;
   gap: 1.5rem;
   padding-right: 1rem;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
   width: 100%;
 }

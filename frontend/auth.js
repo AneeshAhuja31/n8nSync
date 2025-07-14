@@ -43,12 +43,6 @@ async function logout() {
     window.location.href = 'http://localhost:3000/login.html';
 }
 
-const storedName = localStorage.getItem('userName');
-const storedEmail = localStorage.getItem('userEmail');
-if (storedName){
-    document.getElementById('welcome').innerText = `Welcome ${storedName}.`;
-}
-
 document.addEventListener('DOMContentLoaded',async()=>{
     checkApiKeys();
     const storedName = localStorage.getItem('userName');
@@ -57,8 +51,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const apiKeyForm = document.getElementById('apiKeyForm');
     const instanceTypeSelect = document.getElementById("n8nInstanceType");
     const cloudUriInput = document.getElementById("n8nCloudUri");
+    
     if (storedName){
-        document.getElementById('welcome').innerText = `Welcome ${storedName}.`;
+        const welcomeElement = document.getElementById('welcome');
+        if (welcomeElement) {
+            welcomeElement.innerText = `Welcome ${storedName}.`;
+        }
     }
     await validateAuth();
 

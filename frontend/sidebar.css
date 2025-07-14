@@ -1,0 +1,35 @@
+.chat-history-list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 0 8px;
+    max-height: 300px; 
+}
+
+.chat-history-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-history-list::-webkit-scrollbar-track {
+    background: #1A1A1A;
+    border-radius: 3px;
+}
+
+.chat-history-list::-webkit-scrollbar-thumb {
+    background-color: #4A7B7A;
+    border-radius: 3px;
+    border: 1px solid #1A1A1A;
+}
+
+.chat-history-list::-webkit-scrollbar-thumb:hover {
+    background-color: #5E9291;
+}
+
+.chat-history-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+}

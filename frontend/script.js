@@ -283,10 +283,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 data.messages.forEach(message => {
                     if (message.role === 'assistant') {
-                        // For AI messages, render with markdown to handle JSON blocks
+                        // For AI messages, create proper structure like streaming
                         const messageDiv = addMessage('', message.role, false);
+                        const answerContainer = createAnswerContainer(messageDiv);
                         const renderedContent = renderMarkdown(message.content);
-                        messageDiv.innerHTML = renderedContent;
+                        answerContainer.innerHTML = renderedContent;
                     } else {
                         // For user messages, use plain text
                         addMessage(message.content, message.role, false);

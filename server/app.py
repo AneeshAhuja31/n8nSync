@@ -37,9 +37,6 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# Chat history storage (in production, use a database)
-chat_sessions: Dict[str, List[Dict[str, Any]]] = {}
-
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -266,16 +263,6 @@ async def stream_agent_response(chat_input: ChatMessage):
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Headers": "*"
         }
-    )
-
-@app.get("/chat/history/{session_id}")
-async def get_chat_history(session_id: str):
-    if session_id not in chat_sessions:
-        return ChatHistoryResponse(session_id=session_id, messages=[])
-    
-    return ChatHistoryResponse(
-        session_id=session_id,
-        messages=chat_sessions[session_id]
     )
 
 @app.post("/validate-n8n-api-key")
