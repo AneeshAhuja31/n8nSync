@@ -53,6 +53,8 @@ async def wrapper_get_all_existing_workflows(api_key:str) ->Tool:
                 }
             else: 
                 return {"success": False, "error": "Error in retrieving existing workflows", "status_code": response.status_code}
+        except ConnectionError as e:
+            return {"success":False,"error":f"n8n instance not running, tell user to first start the n8n instance"}
         except Exception as e:
             return {"success": False, "error": f"Request failed: {str(e)}"}
     return Tool(

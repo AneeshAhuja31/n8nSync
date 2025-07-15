@@ -9,38 +9,30 @@ document.addEventListener('DOMContentLoaded', () => {
     let isLoading = false;
     let chatHistory = [];
     
-    // Initialize chat management
     initializeChatManagement();
     
     async function initializeChatManagement() {
         try {
-            // Load most recent chat on dashboard load
             await loadMostRecentChat();
             
-            // Set up event listeners
             setupEventListeners();
             
-            // Load chat history for sidebar
-            await loadChatHistory();
+            await loadChatHistory(); //in sidebar
             
         } catch (error) {
             console.error('Failed to initialize chat management:', error);
-            // Fallback: create new chat
-            await createNewChat();
+            await createNewChat(); //new chat fallback in case of error
         }
     }
     
     function setupEventListeners() {
-        // New chat button
         newChatBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             await createNewChat();
         });
         
-        // Replace history button with chat list
         setupChatHistoryInterface();
         
-        // Chat form submission
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!checkApiKeysBeforeChat()) {
@@ -55,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function setupChatHistoryInterface() {
-        // Replace history button with chat list container
         const historyContainer = document.createElement('div');
         historyContainer.className = 'chat-history-container';
         historyContainer.innerHTML = `
@@ -73,10 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         
-        // Replace history button with new container
         historyBtn.parentNode.replaceChild(historyContainer, historyBtn);
         
-        // Add refresh functionality
         const refreshBtn = historyContainer.querySelector('.refresh-chats-btn');
         refreshBtn.addEventListener('click', async () => {
             await loadChatHistory();
@@ -99,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             currentChatId = data.chat_id;
             
-            // Load messages for this chat
             await loadChatMessages(currentChatId);
             
         } catch (error) {
@@ -125,13 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             currentChatId = data.chat_id;
             
-            // Clear chat messages
             clearChatMessages();
             
-            // Refresh chat history
             await loadChatHistory();
             
-            // Show welcome message
             showWelcomeMessage();
             
             hideLoader();
@@ -197,7 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
         
-        // Add event listeners to chat items
         addChatHistoryEventListeners();
     }
     
@@ -206,10 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const editBtns = document.querySelectorAll('.edit-chat-btn');
         const deleteBtns = document.querySelectorAll('.delete-chat-btn');
         
-        // Chat item click to switch chats
         chatItems.forEach(item => {
             item.addEventListener('click', async (e) => {
-                // Don't switch chat if clicking on action buttons
                 if (e.target.closest('.chat-actions')) return;
                 
                 const chatId = item.dataset.chatId;
@@ -219,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         
-        // Edit chat title
         editBtns.forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -228,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         
-        // Delete chat
         deleteBtns.forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -246,10 +226,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             currentChatId = chatId;
             
-            // Update active chat in history
+            //update active chat in history
             updateActiveChatInHistory(chatId);
             
-            // Load messages for this chat
+            //load messages for this chat
             await loadChatMessages(chatId);
             
         } catch (error) {
@@ -272,22 +252,20 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             
-            // Clear existing messages
+            //clear existing messages
             clearChatMessages();
             
-            // Render messages
+            //render messages
             if (data.messages.length === 0) {
                 showWelcomeMessage();
             } else {
                 data.messages.forEach(message => {
                     if (message.role === 'assistant') {
-                        // For AI messages, create proper structure like streaming
                         const messageDiv = addMessage('', message.role, false);
                         const answerContainer = createAnswerContainer(messageDiv);
                         const renderedContent = renderMarkdown(message.content);
                         answerContainer.innerHTML = renderedContent;
                     } else {
-                        // For user messages, use plain text
                         addMessage(message.content, message.role, false);
                     }
                 });
@@ -502,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const parsed = JSON.parse(trimmedJson);
                 const formattedJson = JSON.stringify(parsed, null, 2);
                 
-                return `<div class="code-template-container">
+            return `<div class="code-template-container" style="max-width: 90%; margin: auto;">
                     <div class="code-template-header">
                         <span class="code-template-title">JSON</span>
                         <button class="copy-code-btn" onclick="copyToClipboard(this)" data-code="${btoa(formattedJson)}">

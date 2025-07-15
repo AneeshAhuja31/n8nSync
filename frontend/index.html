@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>n8n AI Agent - Intelligent Workflow Automation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #000000;
+            color: #E0E0E0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 20%, rgba(244, 180, 0, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(244, 108, 94, 0.1) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.8; }
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(45deg, #f4b400, #f46c5e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 20px rgba(244, 180, 0, 0.3)); }
+            to { filter: drop-shadow(0 0 40px rgba(244, 108, 94, 0.3)); }
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: linear-gradient(45deg, #f46c5e, #f4b400);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(244, 108, 94, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(244, 108, 94, 0.4);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 2rem;
+            background: #000000;
+            position: relative;
+        }
+
+        .features::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #f46c5e, transparent);
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 3rem;
+            color: #f4b400;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: rgba(26, 26, 26, 0.8);
+            padding: 2.5rem;
+            border-radius: 15px;
+            border: 1px solid rgba(244, 108, 94, 0.2);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #f46c5e, #f4b400);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(244, 108, 94, 0.2);
+            border-color: #f46c5e;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: #f4b400;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #f46c5e;
+        }
+
+        .feature-card p {
+            opacity: 0.9;
+            line-height: 1.7;
+        }
+
+        /* Chat Preview Section */
+        .chat-preview {
+            padding: 6rem 2rem;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            position: relative;
+        }
+
+        .chat-preview-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .chat-preview h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            color: #f4b400;
+        }
+
+        .chat-preview p {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+
+        .chat-mockup {
+            background: rgba(26, 26, 26, 0.9);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid rgba(244, 108, 94, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(244, 108, 94, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        .chat-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #f4b400;
+        }
+
+        .chat-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #4CAF50;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .chat-message {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .chat-message.user {
+            background: #f46c5e;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .chat-message.agent {
+            background: rgba(244, 180, 0, 0.1);
+            border-left: 3px solid #f4b400;
+        }
+
+        /* Security Section */
+        .security {
+            padding: 6rem 2rem;
+            background: #000000;
+        }
+
+        .security-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .security h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            color: #f4b400;
+        }
+
+        .security-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .security-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: rgba(26, 26, 26, 0.5);
+            border-radius: 10px;
+            border: 1px solid rgba(244, 108, 94, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .security-item:hover {
+            border-color: #f46c5e;
+            transform: translateY(-2px);
+        }
+
+        .security-icon {
+            font-size: 2rem;
+            color: #4CAF50;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 3rem 2rem;
+            background: #0a0a0a;
+            text-align: center;
+            border-top: 1px solid rgba(244, 108, 94, 0.2);
+        }
+
+        .footer p {
+            opacity: 0.7;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .footer-links a {
+            color: #f46c5e;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #f4b400;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero p {
+                font-size: 1.2rem;
+            }
+            
+            .features h2, .chat-preview h2, .security h2 {
+                font-size: 2rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .security-features {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        /* Floating animation for background elements */
+        .floating-element {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="floating-element" style="top: 10%; left: 10%;"><i class="fas fa-cog" style="font-size: 3rem;"></i></div>
+        <div class="floating-element" style="top: 20%; right: 15%;"><i class="fas fa-robot" style="font-size: 2.5rem;"></i></div>
+        <div class="floating-element" style="bottom: 30%; left: 20%;"><i class="fas fa-network-wired" style="font-size: 2rem;"></i></div>
+        
+        <div class="hero-content">
+            <h1>n8n AI Agent</h1>
+            <p>Revolutionize your workflow automation with intelligent AI agents. Create, manage, and optimize complex workflows through natural conversation.</p>
+            <a href="#" class="cta-button">Start Automating Now</a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="features-container">
+            <h2>Powerful Features</h2>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-project-diagram feature-icon"></i>
+                    <h3>Workflow Automation</h3>
+                    <p>Create, modify, and manage complex n8n workflows with unprecedented simplicity. Our intuitive interface makes automation accessible to everyone, from beginners to experts. Build sophisticated workflows that connect your favorite apps and services seamlessly.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <i class="fas fa-brain feature-icon"></i>
+                    <h3>Agentic Intelligence</h3>
+                    <p>Leverage AI agents powered by Gemini to analyze your workflows, generate intelligent responses, and provide actionable insights. Get real-time suggestions for optimization and troubleshooting that help you build better automations.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <i class="fas fa-comments feature-icon"></i>
+                    <h3>Real-Time Collaboration</h3>
+                    <p>Interact with your workflows through natural conversation. Ask questions, request modifications, and receive instant feedback. Our chat-based interface makes workflow management feel as natural as talking to a colleague.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <i class="fas fa-plug feature-icon"></i>
+                    <h3>Seamless API Integration</h3>
+                    <p>Connect effortlessly with n8n and Gemini APIs for enhanced functionality. Our robust integration layer ensures secure, reliable communication between your workflows and external services, with built-in error handling and retry mechanisms.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <i class="fas fa-palette feature-icon"></i>
+                    <h3>User-Friendly Interface</h3>
+                    <p>Experience workflow automation through our beautifully designed, intuitive interface. Whether you're technical or non-technical, our chat-based interaction model makes complex automation tasks accessible and enjoyable.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <i class="fas fa-shield-alt feature-icon"></i>
+                    <h3>Enterprise Security</h3>
+                    <p>Your data stays secure with local API key storage and encrypted communications. We prioritize your privacy and security, ensuring that sensitive information never leaves your control while providing enterprise-grade protection.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chat Preview Section -->
+    <section class="chat-preview">
+        <div class="chat-preview-container">
+            <h2>Experience Natural Workflow Management</h2>
+            <p>Interact with your n8n workflows like never before - through intelligent conversation</p>
+            
+            <div class="chat-mockup">
+                <div class="chat-header">
+                    <div class="chat-title">n8n AI Agent</div>
+                    <div class="chat-status">
+                        <div class="status-dot"></div>
+                        <span>Online</span>
+                    </div>
+                </div>
+                
+                <div class="chat-message user">
+                    Create a workflow that monitors my email and sends Slack notifications for urgent messages
+                </div>
+                
+                <div class="chat-message agent">
+                    I'll help you create that workflow! I'm analyzing your n8n instance and can set up:
+                    <br><br>
+                    📧 Email Monitor (Gmail/Outlook trigger)
+                    <br>
+                    🔍 AI-powered urgency detection
+                    <br>
+                    📱 Slack notification with smart formatting
+                    <br><br>
+                    Would you like me to create this workflow now? I can also add custom filtering rules based on sender, subject keywords, or content analysis.
+                </div>
+                
+                <div class="chat-message user">
+                    Yes, please create it and add filtering for emails from my manager
+                </div>
+                
+                <div class="chat-message agent">
+                    Perfect! I've created your workflow with manager email filtering. The workflow is now active and will:
+                    <br><br>
+                    ✅ Monitor your inbox every 5 minutes
+                    <br>
+                    ✅ Prioritize emails from your manager
+                    <br>
+                    ✅ Send formatted Slack notifications
+                    <br><br>
+                    You can view and modify the workflow in your n8n dashboard. Would you like me to test it with a sample email?
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section class="security">
+        <div class="security-container">
+            <h2>Security & Privacy First</h2>
+            <p>Your data security and privacy are our top priorities. We've built enterprise-grade security into every aspect of the application.</p>
+            
+            <div class="security-features">
+                <div class="security-item">
+                    <i class="fas fa-key security-icon"></i>
+                    <div>
+                        <h3>Local API Key Storage</h3>
+                        <p>Your API keys are stored locally in your browser and never transmitted to our servers</p>
+                    </div>
+                </div>
+                
+                <div class="security-item">
+                    <i class="fas fa-lock security-icon"></i>
+                    <div>
+                        <h3>Encrypted Communication</h3>
+                        <p>All communications are encrypted end-to-end using industry-standard protocols</p>
+                    </div>
+                </div>
+                
+                <div class="security-item">
+                    <i class="fas fa-user-shield security-icon"></i>
+                    <div>
+                        <h3>Privacy Protection</h3>
+                        <p>We don't store or access your workflow data - everything stays in your n8n instance</p>
+                    </div>
+                </div>
+                
+                <div class="security-item">
+                    <i class="fas fa-server security-icon"></i>
+                    <div>
+                        <h3>Secure Infrastructure</h3>
+                        <p>Built on secure, scalable infrastructure with regular security audits and updates</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 n8n AI Agent. Empowering automation through intelligent conversation.</p>
+        <p>Built with ❤️ for the automation community</p>
+        <div class="footer-links">
+            <a href="#">Documentation</a>
+            <a href="#">Support</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+        </div>
+    </footer>
+
+    <script>
+        // Add smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll-triggered animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all feature cards
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease';
+            observer.observe(card);
+        });
+
+        // Add parallax effect to floating elements
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const parallaxElements = document.querySelectorAll('.floating-element');
+            
+            parallaxElements.forEach((element, index) => {
+                const speed = 0.5 + (index * 0.1);
+                element.style.transform = `translateY(${scrolled * speed}px) rotate(${scrolled * 0.1}deg)`;
+            });
+        });
+
+        // Add typing effect to hero title
+        const heroTitle = document.querySelector('.hero h1');
+        const originalText = heroTitle.textContent;
+        heroTitle.textContent = '';
+        
+        let i = 0;
+        const typeWriter = () => {
+            if (i < originalText.length) {
+                heroTitle.textContent += originalText.charAt(i);
+                i++;
+                setTimeout(typeWriter, 100);
+            }
+        };
+        
+        // Start typing effect after a short delay
+        setTimeout(typeWriter, 500);
+    </script>
+</body>
+</html>
