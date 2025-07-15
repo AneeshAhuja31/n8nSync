@@ -332,7 +332,7 @@ body {
     }
 }
 
-/* Floating animation for background elements */
+/* Floating animation for background fa elements*/
 .floating-element {
     position: absolute;
     opacity: 0.1;

@@ -330,7 +330,6 @@ async def get_recent_chat(request: Request):
     chat_id = await get_most_recent_chat(user_data["email"])
     
     if not chat_id:
-        # Fix: Use the correct function with proper parameters
         new_chat_response = await create_new_chat(user_data["email"], "New Chat")
         if new_chat_response["success"]:
             chat_id = new_chat_response["chat_id"]

@@ -200,7 +200,7 @@ def _modify_workflow(input_dict: str) -> Dict[str, Any]:
             temperature=0.4
         )
         
-        # Format the message properly as a string
+        #format the message properly as string
         formatted_message = modification_prompt_template.format(
             existing_workflow_json=json.dumps(workflow_json, indent=2),
             custom_changes=custom_changes
@@ -208,7 +208,7 @@ def _modify_workflow(input_dict: str) -> Dict[str, Any]:
         
         response_text = ""
         
-        # Stream the formatted message content
+        #stream formatted message content
         for chunk in llm.stream(formatted_message.content):
             if chunk.content:
                 response_text += chunk.content
