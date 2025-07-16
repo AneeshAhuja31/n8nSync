@@ -1,3 +1,6 @@
 n8n_api_key.txt
 *.env
 __pycache__/
+try.json
+try.py
+workflow.json
