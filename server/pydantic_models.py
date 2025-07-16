@@ -5,6 +5,7 @@ class ChatMessage(BaseModel):
     chat_id: str = "default"
     gemini_api_key: str  
     n8n_api_key: str 
+    n8n_uri: str
 
 class ChatHistoryResponse(BaseModel):
     session_id: str

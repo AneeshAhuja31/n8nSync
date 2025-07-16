@@ -197,6 +197,11 @@ function saveApiKeys(instanceType, cloudUri, n8nApiKey, geminiApiKey) {
 }
 
 function showApiKeyOverlay() {
+    localStorage.removeItem('n8nApiKey');
+    localStorage.removeItem('geminiApiKey');
+    localStorage.removeItem('n8nInstanceType');
+    localStorage.removeItem('n8nCloudUri');
+    
     const overlay = document.getElementById('apiKeyOverlay');
     const container = document.querySelector('.container');
     

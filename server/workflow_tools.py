@@ -12,10 +12,10 @@ load_dotenv()
 
 gemini_api_key_workflow_generation = os.getenv("GEMINI_API_KEY_WORKFLOW_GENERATION")
 
-async def wrapper_fetch_existing_workflow(api_key: str) -> Tool:
+async def wrapper_fetch_existing_workflow(n8n_uri:str,api_key: str) -> Tool:
     def _fetch_existing_workflow(workflow_id: str) -> Dict[str, Any]:
         try:
-            response = requests.get(f"http://localhost:5678/api/v1/workflows/{workflow_id}", headers={
+            response = requests.get(f"{n8n_uri}/api/v1/workflows/{workflow_id}", headers={
                 "accept": "application/json",
                 "X-N8N-API-KEY": api_key
             })
@@ -31,10 +31,10 @@ async def wrapper_fetch_existing_workflow(api_key: str) -> Tool:
         func=_fetch_existing_workflow
     )
 
-async def wrapper_get_all_existing_workflows(api_key:str) ->Tool:
+async def wrapper_get_all_existing_workflows(n8n_uri:str,api_key:str) ->Tool:
     def _get_all_exisiting_workflows() -> Dict[str, Any]:
         try:
-            response = requests.get(f"http://localhost:5678/api/v1/workflows", headers={
+            response = requests.get(f"{n8n_uri}/api/v1/workflows", headers={
                 "accept": "application/json",
                 "X-N8N-API-KEY": f"{api_key}"
             })
@@ -62,11 +62,12 @@ async def wrapper_get_all_existing_workflows(api_key:str) ->Tool:
         description=get_all_exisiting_workflows_description,
         func=lambda _: _get_all_exisiting_workflows()
     )
-async def wrapper_post_worflow(api_key:str) -> Tool:
+async def wrapper_post_worflow(n8n_uri:str,api_key:str) -> Tool:
     def _post_workflow(workflow_json: str)->Dict[str,Any]:
         try:
             if isinstance(workflow_json, str):
                 try:
+                    workflow_json = workflow_json.replace("\\n", "").replace("\n", "").replace('\"', "'")
                     workflow_json = ast.literal_eval(workflow_json)
                 except (ValueError, SyntaxError) as e:
                     return {"success": False, "error": f"Invalid input format: {e}"} 
@@ -77,7 +78,7 @@ async def wrapper_post_worflow(api_key:str) -> Tool:
             if not workflow_json:
                 return {"success": False, "error": "Workflow_json is required"}
             
-            response = requests.post(f"http://localhost:5678/api/v1/workflows",
+            response = requests.post(f"{n8n_uri}/api/v1/workflows",
                     headers={
                         "accept": "application/json",
                         "X-N8N-API-KEY": f"{api_key}"
@@ -96,6 +97,12 @@ async def wrapper_post_worflow(api_key:str) -> Tool:
                     return {
                         "success":False,
                         "message":"Remove active set to true/false key value pair from the workflow json and retry",
+                        "status_code":response.status_code
+                    }
+                elif response_json["message"] == "request/body/id is read-only":
+                    return {
+                        "success":False,
+                        "message":"Remove the id key and it's value from the workflow json and retry",
                         "status_code":response.status_code
                     }
                 wrong_syntax_message = response_json["message"]
@@ -133,7 +140,7 @@ def _create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
         for chunk in llm.stream(full_prompt):
             if chunk.content:
                 response_text += chunk.content
-        
+
         response_text = response_text.strip()
         if response_text.startswith("```json"):
             response_text = response_text.replace("```json", "").strip("`\n ")
@@ -145,7 +152,8 @@ def _create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
             parsed_json = json.loads(response_text)
             return parsed_json
         except json.JSONDecodeError as e:
-            return {"success": False, "error": f"Failed to parse JSON: {e}\nRaw output:\n{response_text}"}
+            return response_text
+            #return {"success": False, "error": f"Failed to parse JSON: {e}\nRaw output:\n{response_text}"}
     except Exception as e:
         return {"success": False, "error": f"Workflow creation failed: {str(e)}"}
 
@@ -228,9 +236,13 @@ def _modify_workflow(input_dict: str) -> Dict[str, Any]:
             }
         except json.JSONDecodeError as e:
             return {
-                "success": False,
-                "error": f"Failed to parse modified workflow JSON: {e}\nRaw output:\n{response_text}"
+                "success": True,
+                "error": response_text
             }
+            # return {
+            #     "success": False,
+            #     "error": f"Failed to parse modified workflow JSON: {e}\nRaw output:\n{response_text}"
+            # }
         
     except Exception as e:
         return {

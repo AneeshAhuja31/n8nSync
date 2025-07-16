@@ -566,6 +566,18 @@ document.addEventListener('DOMContentLoaded', () => {
         agentMessageDiv.appendChild(streamingLoader);
 
         try {
+            let n8nUri = "http://localhost:5678"
+            let n8nInstanceType = localStorage.getItem("n8nInstanceType")
+            if (n8nInstanceType === "cloud"){
+                n8nUri = localStorage.getItem("n8nCloudUri")
+            }
+            else if(n8nInstanceType === "localhost"){
+                n8nUri = "http://localhost:5678";
+            }
+            else{
+                showApiKeyOverlay();
+            }
+
             const response = await fetch('http://localhost:8000/agent/stream', {
                 method: 'POST',
                 headers: {
@@ -576,7 +588,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     message: message,
                     chat_id: currentChatId,
                     n8n_api_key : localStorage.getItem("n8nApiKey"),
-                    gemini_api_key : localStorage.getItem("geminiApiKey")
+                    gemini_api_key : localStorage.getItem("geminiApiKey"),
+                    n8n_uri:n8nUri
                 })
             });
             
@@ -613,6 +626,20 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             if (data.type === 'token') {
                                 fullAnswerContent += data.content;
+                            }
+                            if(data.type === 'invalid_api_key'){
+                                if(streamingLoader){
+                                    streamingLoader.remove();
+                                    streamingLoader = null;
+                                }
+                                agentMessageDiv.innerHTML = `
+                                    <div class="error-message">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        ${data.content}
+                                    </div>
+                                `;
+                                showApiKeyOverlay();
+                                return;
                             }
                         } catch (e) {
                             console.warn('Failed to parse SSE data:', line);

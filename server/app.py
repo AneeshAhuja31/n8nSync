@@ -2,6 +2,8 @@ from fastapi import FastAPI,Request,HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse,RedirectResponse,JSONResponse
 from langchain_google_genai import ChatGoogleGenerativeAI
+from google.api_core.exceptions import InvalidArgument
+from langchain_google_genai.chat_models import ChatGoogleGenerativeAIError
 from custom_callback_handler import CustomCallBackHandler
 from asyncio import Queue
 import asyncio
@@ -189,8 +191,8 @@ async def stream_agent_response(chat_input: ChatMessage):
     user_message = chat_input.message
     gemini_api_key = chat_input.gemini_api_key
     n8n_api_key = chat_input.n8n_api_key
+    n8n_uri = chat_input.n8n_uri
     await load_chat_into_memory(chat_id)
-    await save_message(chat_id,"user",user_message)
     
     queue = Queue()
     cb_handler = CustomCallBackHandler(queue)
@@ -200,9 +202,9 @@ async def stream_agent_response(chat_input: ChatMessage):
         agent_response = ""
         
         try:
-            fetch_existing_workflow = await wrapper_fetch_existing_workflow(n8n_api_key)
-            get_all_existing_workflows = await wrapper_get_all_existing_workflows(n8n_api_key)
-            post_workflow = await wrapper_post_worflow(n8n_api_key)
+            fetch_existing_workflow = await wrapper_fetch_existing_workflow(n8n_uri,n8n_api_key)
+            get_all_existing_workflows = await wrapper_get_all_existing_workflows(n8n_uri,n8n_api_key)
+            post_workflow = await wrapper_post_worflow(n8n_uri,n8n_api_key)
             tools = [
                 fetch_existing_workflow,
                 get_all_existing_workflows,
@@ -239,9 +241,17 @@ async def stream_agent_response(chat_input: ChatMessage):
                 
                 except asyncio.TimeoutError:
                     if agent_task.done():
+                        try:
+                            agent_task.result()
+                        except (InvalidArgument,ChatGoogleGenerativeAIError) as e:
+                            yield f"data: {json.dumps({'type': 'invalid_api_key', 'content': 'Invalid Gemini API key. Please update your API keys.'})}\n\n"
+                            return
+                        except Exception as e:
+                            yield f"data: {json.dumps({'type': 'error', 'content': f'Agent error: {str(e)}'})}\n\n"
+                            return
                         break
                     continue
-                
+
                 except Exception as e:
                     yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
                     break
@@ -254,15 +264,55 @@ async def stream_agent_response(chat_input: ChatMessage):
                         agent_response = final_result['output']
                     elif isinstance(final_result, str) and not agent_response:
                         agent_response = final_result
+                except (InvalidArgument, ChatGoogleGenerativeAIError) as e:
+                    yield f"data: {json.dumps({'type': 'invalid_api_key', 'content': 'Invalid Gemini API key. Please update your API keys.'})}\n\n"
+                    return
                 except Exception as e:
                     yield f"data: {json.dumps({'type': 'error', 'content': f'Agent error: {str(e)}'})}\n\n"
+                    return
+            else:
+                # Task is done, check if it completed successfully
+                try:
+                    final_result = agent_task.result()
+                    if isinstance(final_result, dict) and 'output' in final_result and not agent_response:
+                        agent_response = final_result['output']
+                    elif isinstance(final_result, str) and not agent_response:
+                        agent_response = final_result
+                except (InvalidArgument, ChatGoogleGenerativeAIError) as e:
+                    yield f"data: {json.dumps({'type': 'invalid_api_key', 'content': 'Invalid Gemini API key. Please update your API keys.'})}\n\n"
+                    return
+                except Exception as e:
+                    yield f"data: {json.dumps({'type': 'error', 'content': f'Agent error: {str(e)}'})}\n\n"
+                    return
             
-            await save_message(chat_id, "assistant", agent_response.strip())
-            user_n8n_api_key = ""
+            # Only save message if we have a valid response
+            if agent_response:
+                await save_message(chat_id,"user",user_message)
+                await save_message(chat_id, "assistant", agent_response.strip())
+        #                 break
+        #             continue
+                
+        #         except Exception as e:
+        #             yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+        #             break
             
+        #     # Get final result if not already processed
+        #     if not agent_task.done():
+        #         try:
+        #             final_result = await agent_task
+        #             if isinstance(final_result, dict) and 'output' in final_result and not agent_response:
+        #                 agent_response = final_result['output']
+        #             elif isinstance(final_result, str) and not agent_response:
+        #                 agent_response = final_result
+        #         except Exception as e:
+        #             yield f"data: {json.dumps({'type': 'error', 'content': f'Agent error: {str(e)}'})}\n\n"
+            
+        #     await save_message(chat_id, "assistant", agent_response.strip())
+        # except (ChatGoogleGenerativeAIError,InvalidArgument) as e:
+        #     yield f"data: {json.dumps({'type': 'invalid_api_key', 'content': 'Invalid Gemini API key. Please update your API keys.'})}\n\n"
+        #     return 
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'content': f'Stream error: {str(e)}'})}\n\n"
-            user_n8n_api_key = ""
 
     return StreamingResponse(
         generate_response(),
