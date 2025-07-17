@@ -137,7 +137,7 @@ async def auth_callback(request:Request):
         secure=True, #set to true in prod
         samesite="none",#changed from "lax" to "none" for cross-origin
         max_age=JWT_EXPIRATION_HOURS*3600,
-        domain=".onrender.com"
+        #domain=".onrender.com"
     )
     return response
 
