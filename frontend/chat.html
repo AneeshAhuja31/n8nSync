@@ -55,23 +55,19 @@
       </p>
       <p style="font-size: 12px; color: #888; text-align: center; margin-bottom:0.6rem;">
         We dont store API Keys. 
-        They are saved on your local storage.
-      </p>
-      <form class="api-key-form" id="apiKeyForm">
-        <!-- <select id="n8nInstanceType" required>
-          <option value="" disabled selected hidden >Select n8n Instance Type</option>
-          <option value="localhost">localhost:5678</option>
-          <option value="cloud">n8n Cloud</option>
-        </select> -->
-        <input 
-          type="url" 
-          id="n8nUri" 
-          placeholder="Enter n8n URI (https://<name>.app.n8n.cloud) or exposed ngrok" 
-          style="display: block;"
-        >
+        They are saved on your local storage.<br>
         <p id="localhostMessage" style="display: block; font-size: 12px;color: #888; text-align: center; margin-top: -0.6rem;">
           If using n8n on localhost:5678, expose it using ngrok http 5678.
         </p>
+      </p>
+      <form class="api-key-form" id="apiKeyForm">
+        <input 
+          type="url" 
+          id="n8nUri" 
+          placeholder="Enter n8n cloud URI (https://<name>.app.n8n.cloud) or exposed ngrok" 
+          style="display: block;"
+        >
+        
         
         <input 
           type="password" 
