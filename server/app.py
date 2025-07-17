@@ -33,10 +33,10 @@ from db.chat_and_message_db import (
 import uvicorn
 load_dotenv()
 app = FastAPI()
-
+server_uri = os.getenv("SERVER_URI")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://n8nsync-server.onrender.com"],  # Add your frontend URLs here
+    allow_origins=["https://n8nsync.aneeshahuja.tech","https://n8nsync.vercel.app", server_uri], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -129,7 +129,7 @@ async def auth_callback(request:Request):
     response = await create_or_update_user(user_data)
 
     jwt_token = create_jwt_token(user_data)
-    response = RedirectResponse(f"http://localhost:3000/chat")
+    response = RedirectResponse(f"https://n8nsync.aneeshahuja.tech/chat")
     response.set_cookie(
         key="auth_token",
         value=jwt_token,
