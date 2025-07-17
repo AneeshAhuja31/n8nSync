@@ -608,10 +608,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const data = JSON.parse(line.slice(6));
                             
-                            if ((data.type === 'thought' || data.type === 'observation' || data.type === 'error') && !thoughtsContainer) {
+                            if ((data.type === 'thought' || data.type === 'observation') && !thoughtsContainer) {
                                 thoughtsContainer = createThoughtsContainer(agentMessageDiv);
                             }
-                            
+                            //|| data.type === 'error'
                             if ((data.type === 'token' || data.type === 'final_answer_start') && !answerContainer) {
                                 answerContainer = createAnswerContainer(agentMessageDiv);
                             }

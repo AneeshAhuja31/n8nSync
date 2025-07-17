@@ -15,7 +15,6 @@ from pydantic_models import ChatMessage
 from prompt_templates import combined_react_prompt
 from langchain.agents import create_react_agent,AgentExecutor
 from langchain.agents.output_parsers import ReActSingleInputOutputParser
-from langchain.memory import ConversationBufferWindowMemory
 from langchain_core.runnables import RunnableConfig
 import httpx
 from middleware_jwt import create_jwt_token,verify_jwt_token,get_user_from_token,JWT_EXPIRATION_HOURS
@@ -44,12 +43,17 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
 
 SCOPES = "openid email profile"
+from langchain.memory import ConversationBufferMemory
 
 
-memory = ConversationBufferWindowMemory(
+# memory = ConversationBufferWindowMemory(
+#     memory_key="chat_history",
+#     return_messages=True,
+#     output_key="output"
+# )
+memory = ConversationBufferMemory(
     memory_key="chat_history",
-    return_messages=True,
-    output_key="output"
+    return_messages=True
 )
 
 parser = ReActSingleInputOutputParser()
@@ -75,7 +79,7 @@ async def create_agent_executor(gemini_api_key,tools):
         handle_parsing_errors=True,
         return_intermediate_steps=True,
         early_stopping_method="force",
-        max_iterations=10
+        max_iterations=6
     )
     return agent_executor
 
@@ -232,9 +236,9 @@ async def stream_agent_response(chat_input: ChatMessage):
                         agent_response += data["content"]
                         yield f"data: {message}\n\n"
                     
-                    elif data["type"] in ["thought", "observation", "error", "final_answer_start", "final_answer_end"]:
+                    elif data["type"] in ["thought", "observation", "final_answer_start", "final_answer_end"]:
                         yield f"data: {message}\n\n"
-                        
+                    #"error",
                     elif data["type"] == "end":
                         yield f"data: {message}\n\n"
                         break

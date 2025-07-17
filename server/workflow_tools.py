@@ -281,17 +281,10 @@ def _modify_workflow(input_dict: str) -> Dict[str, Any]:
         elif response_text.startswith("```"):
             response_text = response_text.replace("```", "").strip("`\n ")
         
-        try:
-            modified_workflow = json.loads(response_text)
-            return {
-                "success": True,
-                "modified_workflow": modified_workflow
-            }
-        except json.JSONDecodeError as e:
-            return {
-                "success": True,
-                "error": response_text
-            }
+        return {
+            "success": True,
+            "modified_workflow": response_text
+        }
         
     except Exception as e:
         return {
