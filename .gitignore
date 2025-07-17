@@ -2,3 +2,4 @@ n8n_api_key.txt
 *.env
 __pycache__/
 *.log
+env.txt
