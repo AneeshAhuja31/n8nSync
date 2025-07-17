@@ -13,12 +13,12 @@ async function validateAuth() {
                 return true;
             }
         }
-        window.location.href = 'http://localhost:3000/login.html';
+        window.location.href = 'http://localhost:3000/login';
         return false;
     }
     catch (error){
         console.error('Auth validation error: ',error);
-        window.location.href = 'http://localhost:3000/login.html';
+        window.location.href = 'http://localhost:3000/login';
         return false;
     }
 }
@@ -40,7 +40,7 @@ async function logout() {
     localStorage.removeItem('n8nApiKey');  
     localStorage.removeItem('geminiApiKey');
     localStorage.removeItem('n8nInstanceType')
-    window.location.href = 'http://localhost:3000/login.html';
+    window.location.href = 'http://localhost:3000/login';
 }
 
 document.addEventListener('DOMContentLoaded',async()=>{
@@ -66,14 +66,19 @@ document.addEventListener('DOMContentLoaded',async()=>{
 
     if(instanceTypeSelect){
         instanceTypeSelect.addEventListener("change",function(){
+            const localhostMessage = document.getElementById("localhostMessage");
             if (this.value === "cloud"){
                 cloudUriInput.style.display = "block";
                 cloudUriInput.required = true;
+                localhostMessage.style.display = "none";
             } 
             else {
                 cloudUriInput.style.display = 'none';
                 cloudUriInput.required = false;
                 cloudUriInput.value = ''; 
+                if (this.value === "localhost" && localhostMessage) {
+                    localhostMessage.style.display = "block"; // Show localhost message
+                }
             }
         });
     }

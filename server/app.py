@@ -100,8 +100,6 @@ async def login():
 @app.get("/auth/callback")
 async def auth_callback(request:Request):
     code = request.query_params.get("code")
-    if not code:
-        return RedirectResponse(url="http://localhost:3000/error.html")
     
     token_url = "https://oauth2.googleapis.com/token"
     data = {
@@ -135,7 +133,7 @@ async def auth_callback(request:Request):
         print("User Updated")
 
     jwt_token = create_jwt_token(user_data)
-    response = RedirectResponse(f"http://localhost:3000/chat.html")
+    response = RedirectResponse(f"http://localhost:3000/chat")
     response.set_cookie(
         key="auth_token",
         value=jwt_token,

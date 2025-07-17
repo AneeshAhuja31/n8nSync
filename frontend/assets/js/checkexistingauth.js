@@ -7,7 +7,7 @@ async function checkexistingAuth() {
         if(response.ok){
             const data = await response.json();
             if(data.valid){
-                window.location.href = 'http://localhost:3000/chat.html'
+                window.location.href = 'http://localhost:3000/chat'
                 return;
             }
         }
