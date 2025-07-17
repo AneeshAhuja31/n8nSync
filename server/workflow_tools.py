@@ -8,12 +8,17 @@ from dotenv import load_dotenv
 import os
 import json
 import ast
-import logging
-logging.basicConfig(filename="ayoooo.log", format='%(asctime)s - %(levelname)s - %(message)s')
-
+from api_key_manager import APIKeyManager
 load_dotenv()
 
-gemini_api_key_workflow_generation = os.getenv("GEMINI_API_KEY_WORKFLOW_GENERATION")
+key_manager = APIKeyManager()
+
+llm = ChatGoogleGenerativeAI(
+            api_key=key_manager.get_next_key(),
+            model="gemini-2.5-flash",
+            temperature=0.4,
+            #convert_system_message_to_human=True
+        )
 
 def remove_keys(obj, keys_to_remove):
     if isinstance(obj, dict):
@@ -89,22 +94,15 @@ async def wrapper_post_worflow(n8n_uri:str,api_key:str) -> Tool:
         try:
             if isinstance(workflow_json, str):
                 try:
-                    logging.info(f"Raw input: {workflow_json}")
                     
-                    # First try to parse as JSON directly
                     try:
                         workflow_json = json.loads(workflow_json)
-                        logging.info("Successfully parsed as JSON")
                     except json.JSONDecodeError:
                         # If JSON parsing fails, try ast.literal_eval
-                        logging.info("JSON parsing failed, trying ast.literal_eval")
-                        # Clean up the string before parsing
                         workflow_json = workflow_json.replace('\\"', '"')
                         workflow_json = ast.literal_eval(workflow_json)
-                        logging.info("Successfully parsed with ast.literal_eval")
                         
                 except (ValueError, SyntaxError, json.JSONDecodeError) as e:
-                    logging.error(f"Parsing error: {e}")
                     return {"success": False, "error": f"Invalid input format: {e}"} 
                 
             else:
@@ -178,7 +176,6 @@ async def wrapper_post_worflow(n8n_uri:str,api_key:str) -> Tool:
                     }
                     
         except Exception as e:
-            logging.error(f"Post workflow error: {str(e)}")
             return {"success": False, "error": f"Post Request to post workflow failed: {str(e)}"}
             
     return Tool(
@@ -191,12 +188,7 @@ def _create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
     try:
         full_prompt = creation_prompt_template.replace('[[USER_PROMPT]]', prompt)
 
-        llm = ChatGoogleGenerativeAI(
-            api_key=gemini_api_key_workflow_generation,
-            model="gemini-2.5-flash",
-            temperature=0.4,
-            #convert_system_message_to_human=True
-        )
+        
         response_text = ""
         
         for chunk in llm.stream(full_prompt):
@@ -221,12 +213,6 @@ def _create_workflow_from_prompt(prompt: str) -> Dict[str, Any]:
 
 def _explain_workflow(workflow_json: Dict[str, Any]) -> Dict[str, Any]:
     try:
-        llm = ChatGoogleGenerativeAI(
-            api_key=gemini_api_key_workflow_generation,
-            model="gemini-2.5-flash",
-            temperature=0.3,
-            #convert_system_message_to_human=True
-        )
         explaination_prompt_string = explaination_prompt_template.format(
             workflow_json=json.dumps(workflow_json, indent=2)
         )
@@ -256,13 +242,7 @@ def _modify_workflow(input_dict: str) -> Dict[str, Any]:
         if not ('"workflow_json"' or "'workflow_json'") or not ('"custom_changes"' or "'custom_changes'"):
             return {"success": False, "error": "Both workflow_json and custom_changes are required keys in the input"}
         
-        llm = ChatGoogleGenerativeAI(
-            api_key=gemini_api_key_workflow_generation,
-            model="gemini-2.5-flash",
-            temperature=0.4
-        )
         
-        #format the message properly as string
         formatted_message = modification_prompt_template.format(
             existing_workflow_json_with_custom_changes = input_dict
         )
