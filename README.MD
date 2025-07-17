@@ -1,44 +1,43 @@
 # n8nSync
 
-n8nSync is an agentic application designed to revolutionize workflow automation through natural conversation. It provides an intuitive interface for creating, managing, and optimizing complex workflows using the n8n platform. Whether you're a beginner or an expert, n8nSync makes automation accessible and a breeze.
+n8nSync is an agentic application that transforms workflow automation through natural conversation. Powered by AI agents and seamless integration with the n8n platform, it enables users to create, manage, and optimize complex workflows effortlessly.
 
-## Features
+## Key Features
 
-### Workflow Automation
-- Create, modify, and manage sophisticated workflows that connect your favorite apps and services seamlessly.
-- Build workflows with unprecedented simplicity using a chat-based interface.
-
-### Agentic Intelligence
-- Leverage AI agents built using langchain to analyze workflows, generate intelligent responses, and provide actionable insights.
-- Receive real-time suggestions for optimization and troubleshooting.
-
-### Real-Time Collaboration
-- Interact with workflows through natural conversation.
-- Ask questions, request modifications, and receive instant feedback.
-
-### User-Friendly Interface
-- Beautifully designed, intuitive interface suitable for both technical and non-technical users.
-- Chat-based interaction model makes complex automation tasks accessible.
-
-### Security & Privacy
-- API keys are stored locally in your browser and never transmitted to external servers.
-- Authenticate securely using Google OAuth for enhanced privacy protection.
+- **Conversational Workflow Automation:** Build and modify workflows using a chat-based interface, making automation accessible for all skill levels.
+- **Agentic Intelligence:** AI agents (LangChain + Gemini) analyze workflows, provide actionable insights, and suggest optimizations in real time.
+- **Live Collaboration:** Interact with workflows, ask questions, and receive instant feedback—just like chatting with a colleague.
+- **Secure API Integration:** Connect to n8n and Gemini APIs with robust error handling and retry logic. API keys are stored locally in your browser for maximum privacy.
+- **Google OAuth Authentication:** Authenticate securely using Google OAuth; credentials are protected and never exposed.
+- **Privacy First:** Your workflow data remains in your n8n instance—never stored or accessed by n8nSync.
 
 ## Getting Started
 
-1. **Sign Up**: Create your account using Google OAuth for secure authentication.
-2. **Dashboard**: Access the dashboard to manage your workflows and API keys.
-3. **Start Automating**: Begin creating and optimizing workflows through natural conversation.
+1. **Sign Up:** Use Google OAuth for secure authentication.
+2. **Configure:** Manage your workflows and API keys from the dashboard.
+3. **Automate:** Start building and optimizing workflows via natural conversation.
 
-## Technologies Used
+## Tech Stack
 
-- **Frontend**: HTML, CSS, JavaScript
-- **Backend**: Python
-- **Integration**: n8n platform, Gemini APIs
-- **Security**: Local API key storage, Google OAuth
+- **Frontend:** HTML, CSS, JavaScript
+- **Backend:** FastApi
+- **AI/Agents:** LangChain, Gemini API
+- **Integration:** n8n platform
+- **Authentication:** Google OAuth 2.0
+
+## Install
+```sh
+git clone https://github.com/yourusername/n8nSync.git
+cd n8nSync/server
+pip install -r requirements.txt
+```
+## Run
+```sh
+cd n8nSync/server 
+uvicorn app:app --reload
+```
+
 
 ## License
 
-This project is licensed under the MIT License.
-
----
+MIT License © 2025
