@@ -75,7 +75,7 @@ async def create_agent_executor(gemini_api_key,tools):
         handle_parsing_errors=True,
         return_intermediate_steps=True,
         early_stopping_method="force",
-        max_iterations=6
+        max_iterations=10
     )
     return agent_executor
 
@@ -289,28 +289,6 @@ async def stream_agent_response(chat_input: ChatMessage):
             if agent_response:
                 await save_message(chat_id,"user",user_message)
                 await save_message(chat_id, "assistant", agent_response.strip())
-        #                 break
-        #             continue
-                
-        #         except Exception as e:
-        #             yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
-        #             break
-            
-        #     # Get final result if not already processed
-        #     if not agent_task.done():
-        #         try:
-        #             final_result = await agent_task
-        #             if isinstance(final_result, dict) and 'output' in final_result and not agent_response:
-        #                 agent_response = final_result['output']
-        #             elif isinstance(final_result, str) and not agent_response:
-        #                 agent_response = final_result
-        #         except Exception as e:
-        #             yield f"data: {json.dumps({'type': 'error', 'content': f'Agent error: {str(e)}'})}\n\n"
-            
-        #     await save_message(chat_id, "assistant", agent_response.strip())
-        # except (ChatGoogleGenerativeAIError,InvalidArgument) as e:
-        #     yield f"data: {json.dumps({'type': 'invalid_api_key', 'content': 'Invalid Gemini API key. Please update your API keys.'})}\n\n"
-        #     return 
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'content': f'Stream error: {str(e)}'})}\n\n"
 

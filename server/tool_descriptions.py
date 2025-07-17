@@ -46,9 +46,9 @@ post_workflow_description = """
     - User asks to upload or apply a workflow to their n8n instance
 
     IMPORTANT:
-    - Input must be a complete, valid string in format of the JSON object representing the workflow.
+    - Input must be a complete, valid string in format of the JSON object representing the workflow and should NOT contain any json syntax mistakes .
     - NEVER use single quotes. Only use double quotes in the JSON body.
-    -  ABSOLUTELY DO NOT add the `active`: True/False key value pair in the input workflow_json dictionary.
+    - IMPORTANT: IN THE INPUT OF THE POST WORKFLOW TOOL ABSOLUTELY DO NOT add the following keys and there respective values:  "active","id","createdAt","updatedAt","isArchived","staticData","meta","pinData","versionId","triggerCount","shared","project","tags"
     - Ensure that all required fields (`name`, `nodes`, `connections`, `settings`) are present.
 
     Input Parameters:
@@ -128,7 +128,6 @@ modify_workflow_description = """
     
     Input Parameters:
     - input_dict: (str): Required. Where input_dict will be a string in format of a dictionary.
-    Format of input_dict: Dictionary with workflow_json key and custom_changes key, where workflow_json value is the workflow json (Dict) to be modified, and custom_changes value is the (str) prompt which specifies the modification. 
     
     The modified workflow:
     - Maintains existing structure and format
