@@ -15,6 +15,7 @@ async function checkexistingAuth() {
     catch (error){
         console.error('Auth validation error: ',error);
     }
+    localStorage.clear();
     document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.aneeshahuja.tech;';
     document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     
