@@ -127,10 +127,6 @@ async def auth_callback(request:Request):
         "email":userinfo.get('email')
     }
     response = await create_or_update_user(user_data)
-    if response:
-        print("User Inserted")
-    else:
-        print("User Updated")
 
     jwt_token = create_jwt_token(user_data)
     response = RedirectResponse(f"http://localhost:3000/chat")
@@ -165,9 +161,6 @@ async def validate_token(request:Request):
 async def logout(request:Request):
     response_dict = await request.json()
     inactive_response = await set_user_inactive(response_dict["email"])
-    if(inactive_response):
-        print("User logged out")
-    else: print("Unable to logout")
     response = {"message":"Logged out successfully"}
     response = JSONResponse(content=response)
     response.delete_cookie("auth_token")
