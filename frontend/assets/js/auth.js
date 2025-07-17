@@ -39,18 +39,24 @@ async function logout() {
     localStorage.removeItem('userEmail');
     localStorage.removeItem('n8nApiKey');  
     localStorage.removeItem('geminiApiKey');
-    localStorage.removeItem('n8nInstanceType')
+    localStorage.removeItem('n8nUri');
     window.location.href = 'https://n8nsync.aneeshahuja.tech/login.html';
+}
+
+async function clearCredentials() {
+    localStorage.removeItem('n8nApiKey');  
+    localStorage.removeItem('geminiApiKey');
+    localStorage.removeItem('n8nUri');
+    showApiKeyOverlay();
 }
 
 document.addEventListener('DOMContentLoaded',async()=>{
     checkApiKeys();
     const storedName = localStorage.getItem('userName');
     const storedEmail = localStorage.getItem('userEmail');
+    const clearCredentialsBtn = document.getElementById("clearCredentials");
     const logoutBtn = document.getElementById('logoutBtn');
     const apiKeyForm = document.getElementById('apiKeyForm');
-    const instanceTypeSelect = document.getElementById("n8nInstanceType");
-    const cloudUriInput = document.getElementById("n8nCloudUri");
     
     if (storedName){
         const welcomeElement = document.getElementById('welcome');
@@ -60,27 +66,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
     }
     await validateAuth();
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
+    if(clearCredentialsBtn){
+        clearCredentialsBtn.addEventListener("click",clearCredentials)
     }
 
-    if(instanceTypeSelect){
-        instanceTypeSelect.addEventListener("change",function(){
-            const localhostMessage = document.getElementById("localhostMessage");
-            if (this.value === "cloud"){
-                cloudUriInput.style.display = "block";
-                cloudUriInput.required = true;
-                localhostMessage.style.display = "none";
-            } 
-            else {
-                cloudUriInput.style.display = 'none';
-                cloudUriInput.required = false;
-                cloudUriInput.value = ''; 
-                if (this.value === "localhost" && localhostMessage) {
-                    localhostMessage.style.display = "block"; // Show localhost message
-                }
-            }
-        });
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
     }
 
     if (apiKeyForm) {
@@ -90,29 +81,19 @@ document.addEventListener('DOMContentLoaded',async()=>{
             const saveBtn = document.getElementById("saveBtn");
             loader.style.display = "block";
             saveBtn.disabled = true;
-            const instanceType = document.getElementById("n8nInstanceType").value;
-            const n8nCloudUri = document.getElementById("n8nCloudUri").value.trim();
+            const n8nUri = document.getElementById("n8nUri").value.trim();
             const n8nApiKey = document.getElementById('n8nApiKey').value.trim();
             const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
-            let n8nURI = "";
-            if (instanceType && n8nApiKey && geminiApiKey) {
-                if (instanceType === 'cloud' && !n8nCloudUri) {
-                    alert('Please enter the n8n Cloud URI');
-                    return;
-                }
-                if(instanceType ==="cloud"){
-                    n8nURI = n8nCloudUri;
-                }
-                else{
-                    n8nURI = "http://localhost:5678";
-                }
+            
+            if (n8nApiKey && geminiApiKey) {
+                
                 const n8nValidationResponse = await fetch("https://n8nsync-server.onrender.com/validate-n8n-api-key", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body:JSON.stringify({
-                            "n8nUrl":n8nURI,
+                            "n8nUrl":n8nUri,
                             "n8nApiKey":n8nApiKey
                         })
                     });
@@ -125,12 +106,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
                             alert("❌Invalid n8n API Key or n8n instance not active");
                             return;
                         }
-                        else if(n8nValidationData.message === "Connection Issue" && n8nURI === "http://localhost:5678"){
-                            alert("❌n8n Instance Offline, run n8n locally on terminal!");
-                            return;
-                        }
-                        else if(n8nValidationData.message === "Connection Issue" && n8nURI === n8nCloudUri){
-                            alert("❌Problem connecting with your n8n cloud, please try again later!");
+                        else if(n8nValidationData.message === "Connection Issue"){
+                            alert("❌n8n Instance Offline/Problem connecting with your n8n cloud");
                             return;
                         }
                     }
@@ -166,7 +143,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
                 }
                 loader.style.display = "none";
                 saveBtn.disabled = false;
-                saveApiKeys(instanceType, n8nCloudUri, n8nApiKey, geminiApiKey);
+                saveApiKeys(n8nUri, n8nApiKey, geminiApiKey);
             }
         });
     }
@@ -178,25 +155,19 @@ document.addEventListener('DOMContentLoaded',async()=>{
 function checkApiKeys() {
     const n8nApiKey = localStorage.getItem('n8nApiKey');
     const geminiApiKey = localStorage.getItem('geminiApiKey');
-    const n8nInstanceType = localStorage.getItem('n8nInstanceType');
+    const n8nUri = localStorage.getItem('n8nUri');
     
-    if (!n8nApiKey || !geminiApiKey || !n8nInstanceType) {
+    if (!n8nApiKey || !geminiApiKey || !n8nUri) {
         showApiKeyOverlay();
         return false;
     }
     return true;
 }
 
-function saveApiKeys(instanceType, cloudUri, n8nApiKey, geminiApiKey) {
-    localStorage.setItem('n8nInstanceType', instanceType);
+function saveApiKeys(n8nUri, n8nApiKey, geminiApiKey) {
+    localStorage.setItem('n8nUri', n8nUri);
     localStorage.setItem('n8nApiKey', n8nApiKey);
     localStorage.setItem('geminiApiKey', geminiApiKey);
-    
-    if (instanceType === 'cloud') {
-        localStorage.setItem('n8nCloudUri', cloudUri);
-    } else {
-        localStorage.removeItem('n8nCloudUri');
-    }
     
     hideApiKeyOverlay();
 }
@@ -204,8 +175,7 @@ function saveApiKeys(instanceType, cloudUri, n8nApiKey, geminiApiKey) {
 function showApiKeyOverlay() {
     localStorage.removeItem('n8nApiKey');
     localStorage.removeItem('geminiApiKey');
-    localStorage.removeItem('n8nInstanceType');
-    localStorage.removeItem('n8nCloudUri');
+    localStorage.removeItem('n8nUri');
     
     const overlay = document.getElementById('apiKeyOverlay');
     const container = document.querySelector('.container');

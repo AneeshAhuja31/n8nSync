@@ -26,6 +26,7 @@
       <nav class="nav-links">
         <a href="#">New Chat</a>
         <a href="#">History</a>
+        <a href="#" id="clearCredentials">Clear Credentials</a>
         <a href="#" id="logoutBtn">Logout</a>
         
       </nav>
@@ -57,20 +58,20 @@
         They are saved on your local storage.
       </p>
       <form class="api-key-form" id="apiKeyForm">
-        <select id="n8nInstanceType" required>
+        <!-- <select id="n8nInstanceType" required>
           <option value="" disabled selected hidden >Select n8n Instance Type</option>
           <option value="localhost">localhost:5678</option>
           <option value="cloud">n8n Cloud</option>
-        </select>
-        <p id="localhostMessage" style="display: none; font-size: 12px;color: #888; text-align: center; margin-top: -0.6rem;">
-          Make sure n8n is running on localhost:5678.
-        </p>
+        </select> -->
         <input 
           type="url" 
-          id="n8nCloudUri" 
-          placeholder="Enter n8n Cloud URI (https://<name>.app.n8n.cloud)" 
-          style="display: none;"
+          id="n8nUri" 
+          placeholder="Enter n8n URI (https://<name>.app.n8n.cloud) or exposed ngrok" 
+          style="display: block;"
         >
+        <p id="localhostMessage" style="display: block; font-size: 12px;color: #888; text-align: center; margin-top: -0.6rem;">
+          If using n8n on localhost:5678, expose it using ngrok http 5678.
+        </p>
         
         <input 
           type="password" 
