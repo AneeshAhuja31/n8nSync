@@ -164,7 +164,12 @@ async def logout(request:Request):
     inactive_response = await set_user_inactive(response_dict["email"])
     response = {"message":"Logged out successfully"}
     response = JSONResponse(content=response)
-    response.delete_cookie("auth_token")
+    response.delete_cookie(
+        key="auth_token",
+        httponly=True,
+        secure=True,
+        samesite="none"
+    )
     return response
 
 async def load_chat_into_memory(chat_id: str):
