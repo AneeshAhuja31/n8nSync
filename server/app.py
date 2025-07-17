@@ -53,9 +53,9 @@ memory = ConversationBufferMemory(
     return_messages=True
 )
 
-parser = ReActSingleInputOutputParser()
-
 async def create_agent_executor(gemini_api_key,tools):
+    parser = ReActSingleInputOutputParser()
+
     llm = ChatGoogleGenerativeAI(
         api_key=gemini_api_key,
         model="gemini-2.5-flash",
@@ -129,7 +129,7 @@ async def auth_callback(request:Request):
     response = await create_or_update_user(user_data)
 
     jwt_token = create_jwt_token(user_data)
-    response = RedirectResponse(f"https://n8nsync.aneeshahuja.tech/chat")
+    response = RedirectResponse(f"https://n8nsync.aneeshahuja.tech/chat.html")
     response.set_cookie(
         key="auth_token",
         value=jwt_token,
