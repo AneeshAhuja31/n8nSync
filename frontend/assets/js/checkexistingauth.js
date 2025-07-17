@@ -15,6 +15,11 @@ async function checkexistingAuth() {
     catch (error){
         console.error('Auth validation error: ',error);
     }
+    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.aneeshahuja.tech;';
+    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    
+    // Force a complete page reload to login page without cache
+    window.location.replace('https://n8nsync.aneeshahuja.tech/login.html');
 }
 document.addEventListener('DOMContentLoaded',async()=>{
     await checkexistingAuth();

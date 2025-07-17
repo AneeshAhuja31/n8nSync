@@ -41,9 +41,6 @@ async function logout() {
     localStorage.removeItem('geminiApiKey');
     localStorage.removeItem('n8nUri');
 
-    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.aneeshahuja.tech;';
-    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    
     window.location.href = 'https://n8nsync.aneeshahuja.tech/login.html';
 }
 
