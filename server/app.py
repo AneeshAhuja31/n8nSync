@@ -36,7 +36,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "https://n8nsync-server.onrender.com"],  # Add your frontend URLs here
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
