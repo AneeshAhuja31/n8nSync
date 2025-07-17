@@ -10,10 +10,14 @@ import asyncio
 import os
 import json
 from dotenv import load_dotenv
-from workflow_tools import wrapper_fetch_existing_workflow,wrapper_get_all_existing_workflows,wrapper_post_worflow,create_workflow_from_prompt,explain_workflow,modify_workflow
+from workflow_tools import (wrapper_fetch_existing_workflow,wrapper_get_all_existing_workflows,
+                            wrapper_post_worflow,create_workflow_from_prompt,
+                            explain_workflow,modify_workflow
+                        )
 from pydantic_models import ChatMessage
 from prompt_templates import combined_react_prompt
 from langchain.agents import create_react_agent,AgentExecutor
+from langchain.memory import ConversationBufferMemory
 from langchain.agents.output_parsers import ReActSingleInputOutputParser
 from langchain_core.runnables import RunnableConfig
 import httpx
@@ -43,14 +47,7 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
 
 SCOPES = "openid email profile"
-from langchain.memory import ConversationBufferMemory
 
-
-# memory = ConversationBufferWindowMemory(
-#     memory_key="chat_history",
-#     return_messages=True,
-#     output_key="output"
-# )
 memory = ConversationBufferMemory(
     memory_key="chat_history",
     return_messages=True
