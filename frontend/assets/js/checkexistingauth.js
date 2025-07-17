@@ -1,6 +1,6 @@
 async function checkexistingAuth() {
     try{
-        const response = await fetch("http://localhost:8000/auth/validate",{
+        const response = await fetch("https://n8nsync-server.onrender.com/auth/validate",{
             method:"GET",
             credentials:"include" //include cookies
         })

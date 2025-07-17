@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             showLoader('Loading recent chat...');
             
-            const response = await fetch('http://localhost:8000/chat/recent', {
+            const response = await fetch('https://n8nsync-server.onrender.com/chat/recent', {
                 method: 'GET',
                 credentials: 'include'
             });
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             showLoader('Creating new chat...');
             
-            const response = await fetch('http://localhost:8000/chat/new', {
+            const response = await fetch('https://n8nsync-server.onrender.com/chat/new', {
                 method: 'POST',
                 credentials: 'include'
             });
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function loadChatHistory() {
         try {
-            const response = await fetch('http://localhost:8000/chat/list', {
+            const response = await fetch('https://n8nsync-server.onrender.com/chat/list', {
                 method: 'GET',
                 credentials: 'include'
             });
@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function loadChatMessages(chatId) {
         try {
-            const response = await fetch(`http://localhost:8000/chat/${chatId}/messages`, {
+            const response = await fetch(`https://n8nsync-server.onrender.com/chat/${chatId}/messages`, {
                 method: 'GET',
                 credentials: 'include'
             });
@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const newTitle = prompt('Enter new chat title:', chat.title);
         if (newTitle && newTitle.trim() !== chat.title) {
             try {
-                const response = await fetch(`http://localhost:8000/chat/${chatId}/title`, {
+                const response = await fetch(`https://n8nsync-server.onrender.com/chat/${chatId}/title`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!chat) return;
         
         try {
-            const response = await fetch(`http://localhost:8000/chat/${chatId}`, {
+            const response = await fetch(`https://n8nsync-server.onrender.com/chat/${chatId}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
@@ -578,7 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showApiKeyOverlay();
             }
 
-            const response = await fetch('http://localhost:8000/agent/stream', {
+            const response = await fetch('https://n8nsync-server.onrender.com/agent/stream', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

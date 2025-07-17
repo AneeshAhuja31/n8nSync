@@ -1,6 +1,6 @@
 async function validateAuth() {
     try{
-        const response = await fetch("http://localhost:8000/auth/validate/",{
+        const response = await fetch("https://n8nsync-server.onrender.com/auth/validate/",{
             method:"GET",
             credentials:"include" //include cookies
         })
@@ -25,7 +25,7 @@ async function validateAuth() {
 
 async function logout() {
     try{
-        await fetch('http://localhost:8000/auth/logout',{
+        await fetch('https://n8nsync-server.onrender.com/auth/logout',{
             method:'POST',
             credentials:'include',
             body:JSON.stringify({
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
                 else{
                     n8nURI = "http://localhost:5678";
                 }
-                const n8nValidationResponse = await fetch("http://localhost:8000/validate-n8n-api-key", {
+                const n8nValidationResponse = await fetch("https://n8nsync-server.onrender.com/validate-n8n-api-key", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
                         }
                     }
                 }
-                const geminiValidationResponse = await fetch("http://localhost:8000/validate-gemini-api-key", {
+                const geminiValidationResponse = await fetch("https://n8nsync-server.onrender.com/validate-gemini-api-key", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

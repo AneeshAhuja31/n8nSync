@@ -134,9 +134,10 @@ async def auth_callback(request:Request):
         key="auth_token",
         value=jwt_token,
         httponly=True,
-        secure=False, #set to true in prod
-        samesite="lax",
-        max_age=JWT_EXPIRATION_HOURS*3600
+        secure=True, #set to true in prod
+        samesite="none",#changed from "lax" to "none" for cross-origin
+        max_age=JWT_EXPIRATION_HOURS*3600,
+        domain=".onrender.com"
     )
     return response
 
