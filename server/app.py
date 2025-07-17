@@ -30,7 +30,7 @@ from db.chat_and_message_db import (
     update_chat_access, save_message, get_chat_messages,
     delete_chat, update_chat_title
 )
-
+import uvicorn
 load_dotenv()
 app = FastAPI()
 
@@ -378,3 +378,6 @@ async def delete_chat_endpoint(chat_id: str):
     await delete_chat(chat_id)
     return {"success": True}
 
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000)) 
+    uvicorn.run("app:app", host="0.0.0.0", port=port)
