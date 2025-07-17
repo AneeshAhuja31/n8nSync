@@ -135,7 +135,7 @@ async def auth_callback(request:Request):
         print("User Updated")
 
     jwt_token = create_jwt_token(user_data)
-    response = RedirectResponse(f"http://localhost:3000/dashboard.html")
+    response = RedirectResponse(f"http://localhost:3000/chat.html")
     response.set_cookie(
         key="auth_token",
         value=jwt_token,
