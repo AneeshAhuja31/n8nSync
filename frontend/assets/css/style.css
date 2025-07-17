@@ -592,7 +592,7 @@ body::before {
   border: 1px solid rgba(244, 108, 94, 0.3);
   border-radius: 20px;
   padding: 2.5rem;
-  max-width: 500px;
+  max-width: 590px;
   width: 90%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   position: relative;
