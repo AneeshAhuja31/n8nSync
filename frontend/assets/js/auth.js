@@ -13,12 +13,12 @@ async function validateAuth() {
                 return true;
             }
         }
-        window.location.href = 'https://n8nsync.aneeshahuja.tech/login';
+        window.location.href = 'https://n8nsync.aneeshahuja.tech/login.html';
         return false;
     }
     catch (error){
         console.error('Auth validation error: ',error);
-        window.location.href = 'https://n8nsync.aneeshahuja.tech/login';
+        window.location.href = 'https://n8nsync.aneeshahuja.tech/login.html';
         return false;
     }
 }
@@ -40,7 +40,7 @@ async function logout() {
     localStorage.removeItem('n8nApiKey');  
     localStorage.removeItem('geminiApiKey');
     localStorage.removeItem('n8nInstanceType')
-    window.location.href = 'https://n8nsync.aneeshahuja.tech/login';
+    window.location.href = 'https://n8nsync.aneeshahuja.tech/login.html';
 }
 
 document.addEventListener('DOMContentLoaded',async()=>{
