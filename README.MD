@@ -11,6 +11,10 @@ n8nSync is an agentic application that transforms workflow automation through na
 - **Google OAuth Authentication:** Authenticate securely using Google OAuth; credentials are protected and never exposed.
 - **Privacy First:** Your workflow data remains in your n8n instance—never stored or accessed by n8nSync.
 
+## Click on this image to see demo:
+
+[![Watch the demo](https://img.youtube.com/vi/xCQmBvU8PRU/0.jpg)](https://www.youtube.com/watch?v=xCQmBvU8PRU)
+
 ## Getting Started
 
 1. **Sign Up:** Use Google OAuth for secure authentication.
