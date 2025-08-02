@@ -144,10 +144,10 @@ async def auth_callback(request:Request):
     name = userinfo.get('name')
 
     if not name or not email:
-        raise HTTPException(status_code=400, detail="Missing name or email from Google OAuth")
+        return RedirectResponse("https://n8nsync.aneeshahuja.tech/login.html")
     
     if not email:
-        raise HTTPException(status_code=400,detail="Email not found in user info")
+        return RedirectResponse("https://n8nsync.aneeshahuja.tech/login.html")
     
     user_data = {
         "name":userinfo.get('name'),
@@ -171,7 +171,7 @@ async def auth_callback(request:Request):
 @app.get("/auth/validate")
 async def validate_token(request:Request):
     token = request.cookies.get("auth_token")
-    if not token:  #check if token exists
+    if not token:
         raise HTTPException(status_code=401, detail="No token provided")
     try:
         payload = verify_jwt_token(token)
@@ -281,7 +281,7 @@ async def stream_agent_response(chat_input: ChatMessage):
                     yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
                     break
             
-            # Get final result if not already processed
+            #get final result if not already processed
             if not agent_task.done():
                 try:
                     final_result = await agent_task
@@ -296,7 +296,7 @@ async def stream_agent_response(chat_input: ChatMessage):
                     yield f"data: {json.dumps({'type': 'error', 'content': f'Agent error: {str(e)}'})}\n\n"
                     return
             else:
-                # Task is done, check if it completed successfully
+                #task done, check if it completed successfully
                 try:
                     final_result = agent_task.result()
                     if isinstance(final_result, dict) and 'output' in final_result and not agent_response:
@@ -310,7 +310,7 @@ async def stream_agent_response(chat_input: ChatMessage):
                     yield f"data: {json.dumps({'type': 'error', 'content': f'Agent error: {str(e)}'})}\n\n"
                     return
             
-            # Only save message if we have a valid response
+            #only save message if valid response
             if agent_response:
                 await save_message(chat_id,"user",user_message)
                 await save_message(chat_id, "assistant", agent_response.strip())
