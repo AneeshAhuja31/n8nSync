@@ -386,3 +386,55 @@ body::before {
     0% { transform: translate(0, 0); }
     100% { transform: translate(24px, 0); }
 }
+
+
+/* Turnstile Widget Styling */
+#turnstile-widget {
+    margin: 2rem 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 65px; /* Reserve space for the widget */
+}
+
+#turnstile-widget > div {
+    overflow: hidden;
+    background: rgba(26, 26, 26, 0.5);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Style the iframe when it loads */
+#turnstile-widget iframe {
+    background: transparent !important;
+}
+
+/* Loading state for Turnstile */
+#turnstile-widget:empty::after {
+    content: 'Loading security check...';
+    color: #888;
+    font-size: 0.9rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+/* Disabled state for Google button */
+.google-btn:disabled,
+.google-btn[style*="pointer-events: none"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(26, 26, 26, 0.4);
+    border-color: rgba(244, 108, 94, 0.1);
+}
+
+.google-btn:disabled:hover,
+.google-btn[style*="pointer-events: none"]:hover {
+    transform: none;
+    box-shadow: none;
+    background: rgba(26, 26, 26, 0.4);
+}
+

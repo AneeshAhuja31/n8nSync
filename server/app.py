@@ -42,6 +42,8 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+TURNSTILE_SITE_KEY = os.getenv("TURNSTILE_SITE_KEY")
+TURNSTILE_SITE_SECRET = os.getenv("TURNSTILE_SITE_SECRET")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
@@ -85,7 +87,24 @@ async def root():
     return {"message": "n8n Agentic Workflow Builder"}
 
 @app.get("/login")
-async def login():
+async def login(request:Request):
+    captcha_token = request.query_params.get("captchaToken")
+    if not captcha_token:
+        raise HTTPException(status_code=400, detail="Missing CAPTCHA token")
+    
+    verification_url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+    data = {
+        "secret": TURNSTILE_SITE_SECRET,
+        "response": captcha_token,
+        "remoteip": request.client.host
+    }
+    r = requests.post(verification_url, data=data)
+    result = r.json()
+
+    if not result.get("success"):
+        raise HTTPException(status_code=403, detail="CAPTCHA verification failed")
+    print("CloudFlare Success")
+    
     google_auth_url = (
         f"https://accounts.google.com/o/oauth2/v2/auth"
         f"?client_id={GOOGLE_CLIENT_ID}"

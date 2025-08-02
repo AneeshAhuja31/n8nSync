@@ -3,3 +3,4 @@ n8n_api_key.txt
 __pycache__/
 *.log
 env.txt
+local_frontend/
