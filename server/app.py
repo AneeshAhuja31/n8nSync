@@ -140,10 +140,18 @@ async def auth_callback(request:Request):
             headers={'Authorization': f'Bearer {access_token}'}
         )
         userinfo = userinfo_response.json()
+    email = userinfo.get('email')
+    name = userinfo.get('name')
 
+    if not name or not email:
+        raise HTTPException(status_code=400, detail="Missing name or email from Google OAuth")
+    
+    if not email:
+        raise HTTPException(status_code=400,detail="Email not found in user info")
+    
     user_data = {
         "name":userinfo.get('name'),
-        "email":userinfo.get('email')
+        "email":email
     }
     response = await create_or_update_user(user_data)
 
