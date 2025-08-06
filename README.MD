@@ -31,7 +31,7 @@ n8nSync is an agentic application that transforms workflow automation through na
 
 ## Install
 ```sh
-git clone https://github.com/yourusername/n8nSync.git
+git clone https://github.com/AneeshAuja31/n8nSync.git
 cd n8nSync/server
 pip install -r requirements.txt
 ```
