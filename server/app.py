@@ -144,10 +144,10 @@ async def auth_callback(request:Request):
     name = userinfo.get('name')
 
     if not name or not email:
-        return RedirectResponse("https://n8nsync.aneeshahuja.tech/login.html")
+        return RedirectResponse("https://n8nsync.vercel.app/login.html")
     
     if not email:
-        return RedirectResponse("https://n8nsync.aneeshahuja.tech/login.html")
+        return RedirectResponse("https://n8nsync.vercel.app/login.html")
     
     user_data = {
         "name":userinfo.get('name'),
@@ -156,7 +156,7 @@ async def auth_callback(request:Request):
     response = await create_or_update_user(user_data)
 
     jwt_token = create_jwt_token(user_data)
-    response = RedirectResponse(f"https://n8nsync.aneeshahuja.tech/chat.html")
+    response = RedirectResponse(f"https://n8nsync.vercel.app/chat.html")
     response.set_cookie(
         key="auth_token",
         value=jwt_token,

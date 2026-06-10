@@ -13,12 +13,12 @@ async function validateAuth() {
                 return true;
             }
         }
-        window.location.href = 'https://n8nsync.aneeshahuja.tech/login.html';
+        window.location.href = '/login.html';
         return false;
     }
     catch (error){
         console.error('Auth validation error: ',error);
-        window.location.href = 'https://n8nsync.aneeshahuja.tech/login.html';
+        window.location.href = '/login.html';
         return false;
     }
 }
@@ -41,7 +41,7 @@ async function logout() {
     localStorage.removeItem('geminiApiKey');
     localStorage.removeItem('n8nUri');
 
-    window.location.href = 'https://n8nsync.aneeshahuja.tech/login.html';
+    window.location.href = '/login.html';
 }
 
 async function clearCredentials() {
